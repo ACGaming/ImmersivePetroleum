@@ -2,7 +2,6 @@ package flaxbeard.immersivepetroleum.common.network;
 
 import java.util.function.Supplier;
 
-import blusunrize.immersiveengineering.common.network.IMessage;
 import blusunrize.immersiveengineering.common.util.ItemNBTHelper;
 import flaxbeard.immersivepetroleum.common.IPContent.Items;
 import flaxbeard.immersivepetroleum.common.items.ProjectorItem;
@@ -12,7 +11,7 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent.Context;
 
-public class MessageRotateSchematic implements IMessage{
+public class MessageRotateSchematic implements INetMessage{
 	public int rotate;
 	public boolean flip;
 	

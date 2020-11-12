@@ -3,7 +3,6 @@ package flaxbeard.immersivepetroleum.common.network;
 import java.util.function.Supplier;
 
 import blusunrize.immersiveengineering.common.items.IEItems;
-import blusunrize.immersiveengineering.common.network.IMessage;
 import blusunrize.immersiveengineering.common.util.ItemNBTHelper;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,7 +12,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent.Context;
 
-public class MessageCloseBook implements IMessage{
+public class MessageCloseBook implements INetMessage{
 	
 	public ResourceLocation name;
 	
