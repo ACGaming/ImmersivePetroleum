@@ -12,6 +12,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent.Context;
 
+@Deprecated
 public class MessageCloseBook implements INetMessage{
 	
 	public ResourceLocation name;

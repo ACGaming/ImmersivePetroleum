@@ -16,6 +16,7 @@ import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.Mutable;
+import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
 import net.minecraft.world.gen.feature.template.Template;
 
@@ -32,12 +33,14 @@ public class MultiblockProjection{
 	final Int2ObjectMap<List<Template.BlockInfo>> layers = new Int2ObjectArrayMap<>();
 	final int blockcount;
 	Mutable offset;
-	boolean isDirty=true;
-	public MultiblockProjection(@Nonnull IMultiblock multiblock){
+	boolean isDirty = true;
+	World world;
+	public MultiblockProjection(World world, @Nonnull IMultiblock multiblock){
 		Objects.requireNonNull(multiblock);
+		this.world = world;
 		this.multiblock = multiblock;
 		
-		List<Template.BlockInfo> blocks = multiblock.getStructure();
+		List<Template.BlockInfo> blocks = multiblock.getStructure(this.world);
 		this.blockcount = blocks.size();
 		for(Template.BlockInfo info:blocks){
 			List<Template.BlockInfo> list = this.layers.get(info.pos.getY());
@@ -174,8 +177,8 @@ public class MultiblockProjection{
 		if(!this.isDirty) return;
 		this.isDirty=false;
 		
-		int mWidth = this.multiblock.getSize().getX();
-		int mDepth = this.multiblock.getSize().getZ();
+		int mWidth = this.multiblock.getSize(this.world).getX();
+		int mDepth = this.multiblock.getSize(this.world).getZ();
 		
 		// Determine if the dimensions are even (true) or odd (false)
 		// Divide with float, Divide with int then subtract both and check for 0

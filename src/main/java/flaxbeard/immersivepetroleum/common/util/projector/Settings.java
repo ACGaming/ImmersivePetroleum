@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
 import flaxbeard.immersivepetroleum.common.network.MessageProjectorSync;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Hand;
@@ -99,6 +100,10 @@ public class Settings{
 	
 	public void sendPacketToServer(Hand hand){
 		MessageProjectorSync.sendToServer(this, hand);
+	}
+	
+	public void sendPacketToClient(PlayerEntity player, Hand hand){
+		MessageProjectorSync.sendToClient(player, this, hand);
 	}
 	
 	public void setRotation(Rotation rotation){

@@ -25,10 +25,9 @@ public class IPPacketHandler
 	
 	public static void preInit(){
 		registerMessage(MessageDebugSync.class, MessageDebugSync::new);
-		registerMessage(MessageCloseBook.class, MessageCloseBook::new);
-		registerMessage(MessageRotateSchematic.class, MessageRotateSchematic::new);
 		registerMessage(MessageSyncReservoirs.class, MessageSyncReservoirs::new);
 		registerMessage(MessageConsumeBoatFuel.class, MessageConsumeBoatFuel::new);
+		registerMessage(MessageProjectorSync.class, MessageProjectorSync::new);
 	}
 	
 	private static int id=0;

@@ -79,7 +79,7 @@ public class ProjectorScreen extends Screen{
 		this.searchField = addButton(new SearchField(this.font, this.guiLeft + 23, this.guiTop + 11));
 		
 		addButton(new ConfirmButton(this.guiLeft + 132, this.guiTop + 5, but -> {
-			ItemStack held=Minecraft.getInstance().player.getHeldItem(this.hand);
+			ItemStack held = Minecraft.getInstance().player.getHeldItem(this.hand);
 			this.settings.applyTo(held);
 			this.settings.sendPacketToServer(this.hand);
 			Minecraft.getInstance().currentScreen.closeScreen();
@@ -101,11 +101,11 @@ public class ProjectorScreen extends Screen{
 	}
 	
 	private void listaction(Button button){
-		GuiReactiveList l=(GuiReactiveList)button;
-		String str=this.listEntries[l.selectedOption];
-		IMultiblock mb=this.multiblocks.get().get(Integer.valueOf(str));
+		GuiReactiveList l = (GuiReactiveList) button;
+		String str = this.listEntries[l.selectedOption];
+		IMultiblock mb = this.multiblocks.get().get(Integer.valueOf(str));
 		
-		ImmersivePetroleum.log.info(l.selectedOption+" -> \""+str+"\" -> "+mb.getUniqueName());
+		ImmersivePetroleum.log.info(l.selectedOption + " -> \"" + str + "\" -> " + mb.getUniqueName());
 		this.settings.setMultiblock(mb);
 	}
 	
@@ -121,9 +121,9 @@ public class ProjectorScreen extends Screen{
 		}
 		
 		// Lazy search based on content
-		list.removeIf(str->{
-			IMultiblock mb=this.multiblocks.get().get(Integer.valueOf(str));
-			String name=I18n.format("desc.immersiveengineering.info.multiblock.IE:" + ProjectorItem.getActualMBName(mb));
+		list.removeIf(str -> {
+			IMultiblock mb = this.multiblocks.get().get(Integer.valueOf(str));
+			String name = I18n.format("desc.immersiveengineering.info.multiblock.IE:" + ProjectorItem.getActualMBName(mb));
 			
 			return !name.contains(this.searchField.getText());
 		});
@@ -132,7 +132,7 @@ public class ProjectorScreen extends Screen{
 		GuiReactiveList guilist = new GuiReactiveList(this, this.guiLeft + 7, this.guiTop + 26, 100, 133, button -> listaction(button), this.listEntries);
 		guilist.setPadding(1, 1, 1, 1);
 		guilist.setTranslationFunc(str -> {
-			IMultiblock mb=this.multiblocks.get().get(Integer.valueOf(str));
+			IMultiblock mb = this.multiblocks.get().get(Integer.valueOf(str));
 			return I18n.format("desc.immersiveengineering.info.multiblock.IE:" + ProjectorItem.getActualMBName(mb));
 		});
 		
@@ -161,7 +161,7 @@ public class ProjectorScreen extends Screen{
 			}
 		}
 		
-		if(this.settings.getMultiblock()!=null){
+		if(this.settings.getMultiblock() != null){
 			// TODO Multiblock Preview Rendering
 		}
 	}
