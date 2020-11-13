@@ -1,7 +1,10 @@
 package flaxbeard.immersivepetroleum.client.gui;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -17,6 +20,8 @@ import blusunrize.immersiveengineering.common.blocks.multiblocks.UnionMultiblock
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.common.items.ProjectorItem;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -31,14 +36,18 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Quaternion;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
@@ -63,7 +72,7 @@ public class ProjectorScreen extends Screen{
 	private int guiTop;
 	
 	private Lazy<List<IMultiblock>> multiblocks;
-	
+	private Test blockAccessTest;
 	private GuiReactiveList list;
 	private String[] listEntries;
 	
@@ -191,7 +200,6 @@ public class ProjectorScreen extends Screen{
 			}
 			drawCenteredString(matrix, this.font, text, this.guiLeft + 127, this.guiTop - 10, -1);
 			
-			// TODO Multiblock Preview Rendering
 			IRenderTypeBuffer.Impl buffer = IRenderTypeBuffer.getImpl(Tessellator.getInstance().getBuffer());
 			try{
 				
@@ -206,36 +214,136 @@ public class ProjectorScreen extends Screen{
 					matrix.rotate(new Quaternion(0, 45-(int)rotation, 0, true));
 					matrix.translate(size.getX() / -2F, size.getY() / -2F, size.getZ() / -2F);
 					
-					matrix.push();
-					{
-						if(mb.canRenderFormedStructure()){
+					boolean tempDisable = true;
+					if(tempDisable && mb.canRenderFormedStructure()){
+						matrix.push();
+						{
 							mb.renderFormedStructure(matrix, disableLighting(buffer));
-						}else{
-							final BlockRendererDispatcher blockRender = Minecraft.getInstance().getBlockRendererDispatcher();
-							int it = 0;
-							List<Template.BlockInfo> infos = mb.getStructure(null);
-							for(Template.BlockInfo info:infos){
-								if(info.state.getMaterial() != Material.AIR && !mb.overwriteBlockRender(info.state, it++)){
-									matrix.push();
-									{
-										matrix.translate(info.pos.getX(), info.pos.getY(), info.pos.getZ());
-										int overlay = OverlayTexture.NO_OVERLAY;
-										IModelData modelData = EmptyModelData.INSTANCE;
-										blockRender.renderBlock(info.state, matrix, disableLighting(buffer), 0xF000F0, overlay, modelData);
+						}
+						matrix.pop();
+					}else{
+						if(this.blockAccessTest==null || (this.blockAccessTest.multiblock.getUniqueName().equals(mb.getUniqueName()))){
+							this.blockAccessTest = new Test(mb);
+						}
+						
+						final BlockRendererDispatcher blockRender = Minecraft.getInstance().getBlockRendererDispatcher();
+						int it = 0;
+						List<Template.BlockInfo> infos = mb.getStructure(null);
+						for(Template.BlockInfo info:infos){
+							if(info.state.getMaterial() != Material.AIR && !mb.overwriteBlockRender(info.state, it++)){
+								matrix.push();
+								{
+									matrix.translate(info.pos.getX(), info.pos.getY(), info.pos.getZ());
+									int overlay = OverlayTexture.NO_OVERLAY;
+									IModelData modelData = EmptyModelData.INSTANCE;
+									TileEntity te = this.blockAccessTest.getTileEntity(info.pos);
+									if(te!=null){
+										modelData = te.getModelData();
 									}
-									matrix.pop();
+									blockRender.renderBlock(info.state, matrix, disableLighting(buffer), 0xF000F0, overlay, modelData);
 								}
+								matrix.pop();
 							}
-							//*/
 						}
 					}
-					matrix.pop();
 				}
 				matrix.pop();
 			}catch(Exception e){
 				e.printStackTrace();
 			}
 			buffer.finish();
+		}
+	}
+	
+	// TODO Get rid of this once access to ManualElementMultiblock.MultiblockBlockAccess has been granted.
+	static class Test implements IBlockReader{
+		static Field field_cachedBlockState;
+		
+		IMultiblock multiblock;
+		Map<BlockPos, TileEntity> tiles;
+		Map<BlockPos, BlockState> states;
+		int size;
+		Test(IMultiblock multiblock){
+			this.multiblock = multiblock;
+			this.tiles = new HashMap<>();
+			this.states = new HashMap<>();
+			List<Template.BlockInfo> list = multiblock.getStructure(null);
+			this.size = list.size();
+			
+			if(field_cachedBlockState == null){
+				try{
+					field_cachedBlockState = TileEntity.class.getDeclaredField("cachedBlockState");
+					field_cachedBlockState.setAccessible(true);
+				}catch(NoSuchFieldException e){
+					try{
+						field_cachedBlockState = TileEntity.class.getDeclaredField("field_195045_e");
+						field_cachedBlockState.setAccessible(true);
+					}catch(NoSuchFieldException e1){
+						e.printStackTrace();
+						e1.printStackTrace();
+						throw new RuntimeException(e1);
+					}
+				}
+			}
+			
+			if(field_cachedBlockState != null){
+				for(Template.BlockInfo info:list){
+					try{
+						this.states.put(info.pos, info.state);
+						if(info.nbt != null && !info.nbt.isEmpty()){
+							TileEntity te = TileEntity.readTileEntity(info.state, info.nbt);
+							if(te != null){
+								field_cachedBlockState.set(te, info.state);
+								this.tiles.put(info.pos, te);
+							}
+						}
+					}catch(Exception e){
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		
+		@Override
+		public TileEntity getTileEntity(BlockPos pos){
+			if(this.states.containsKey(pos)){
+				Vector3i size = this.multiblock.getSize(null);
+				int x = pos.getX();
+				int y = pos.getY();
+				int z = pos.getZ();
+				int index = (size.getX() * size.getZ() * y) + (size.getX() * z) + x;
+				if(index <= this.size){
+					return this.tiles.get(pos);
+				}
+			}
+			
+			return null;
+		}
+		
+		@Override
+		public BlockState getBlockState(BlockPos pos){
+			if(this.states.containsKey(pos)){
+				Vector3i size = this.multiblock.getSize(null);
+				int x = pos.getX();
+				int y = pos.getY();
+				int z = pos.getZ();
+				int index = (size.getX() * size.getZ() * y) + (size.getX() * z) + x;
+				if(index <= this.size){
+					return this.states.get(pos);
+				}
+			}
+			
+			return Blocks.AIR.getDefaultState();
+		}
+		
+		@Override
+		public FluidState getFluidState(BlockPos pos){
+			return this.getBlockState(pos).getFluidState();
+		}
+
+		@Override
+		public int getLightValue(BlockPos pos){
+			return 0xF000F0;
 		}
 	}
 	
