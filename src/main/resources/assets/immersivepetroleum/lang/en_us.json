@@ -65,6 +65,15 @@
 	"_comment": "This is for the upgrade list of the speedboat tooltip",
 	"desc.immersivepetroleum.flavour.speedboat0": "Upgrade(s)",
 	
+	"_comment": "################## GUI ##################",
+	
+	"gui.immersivepetroleum.projector.search": "Search",
+	"gui.immersivepetroleum.projector.button.confirm": "Confirm",
+	"gui.immersivepetroleum.projector.button.cancel": "Cancel",
+	"gui.immersivepetroleum.projector.button.mirror": "Mirror",
+	"gui.immersivepetroleum.projector.button.rcw": "Rotate Clockwise",
+	"gui.immersivepetroleum.projector.button.rccw": "Rotate Counter-Clockwise",
+	
 	"_comment": "################## IE-Manual ##################",
 	
 	"effect.immersivepetroleum.anti_fire": "",
@@ -117,7 +126,7 @@
 	"chat.immersivepetroleum.info.coresample.oilRep": "Up to %d mB/tick of trace %s",
 	"chat.immersivepetroleum.info.coresample.noOil": "No Fluid Reservoir",
 	
-	"chat.immersivepetroleum.info.schematic.noMultiblock": "Craft with Engineer's Manual",
+	"chat.immersivepetroleum.info.schematic.noMultiblock": "Right-Click to open Menu",
 	"chat.immersivepetroleum.info.schematic.build0": "Displays instructions",
 	"chat.immersivepetroleum.info.schematic.build1": "for making a %s",
 	"chat.immersivepetroleum.info.schematic.center": "Centered at [%d, %d, %d]",
@@ -136,5 +145,6 @@
 	"chat.immersivepetroleum.info.projector.mode_0": "Selection Mode",
 	"chat.immersivepetroleum.info.projector.mode_1": "Projection Mode",
 	
-	"key.immersivepetroleum.projector.flip":"Flip Projector-Preview"
+	"key.categories.immersivepetroleum": "Immersive Petroleum",
+	"key.immersivepetroleum.projector.flip": "Mirror Projection"
 }

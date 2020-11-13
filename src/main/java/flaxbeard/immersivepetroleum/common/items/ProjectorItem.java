@@ -82,7 +82,10 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = ImmersivePetroleum.MODID)
@@ -118,7 +121,7 @@ public class ProjectorItem extends IPItemBase{
 			tooltip.add(new TranslationTextComponent("chat.immersivepetroleum.info.projector.flipped", flipped).mergeStyle(TextFormatting.DARK_GRAY));
 			
 			ITextComponent ctrl0 = new TranslationTextComponent("chat.immersivepetroleum.info.schematic.controls1").mergeStyle(TextFormatting.DARK_GRAY);
-			ITextComponent ctrl1 = new TranslationTextComponent("chat.immersivepetroleum.info.schematic.controls2", I18n.format(ClientProxy.keybind_preview_flip.getTranslationKey())).mergeStyle(TextFormatting.DARK_GRAY);
+			ITextComponent ctrl1 = new TranslationTextComponent("chat.immersivepetroleum.info.schematic.controls2", ClientProxy.keybind_preview_flip.func_238171_j_()).mergeStyle(TextFormatting.DARK_GRAY);
 			
 			tooltip.add(ctrl0);
 			tooltip.add(ctrl1);
@@ -173,28 +176,33 @@ public class ProjectorItem extends IPItemBase{
 	public ActionResult<ItemStack> onItemRightClick(World worldIn, PlayerEntity playerIn, Hand handIn){
 		ItemStack held=playerIn.getHeldItem(handIn);
 		
-		Settings settings = getSettings(held);
 		boolean changeMode = false;
-		if(settings.getMode() == Mode.PROJECTION){
-			if(worldIn.isRemote){
-				if(playerIn.isSneaking()){
-					if(settings.getPos() != null){
-						settings.setPos(null);
-						settings.sendPacketToServer(handIn);
+		Settings settings = getSettings(held);
+		switch(settings.getMode()){
+			case PROJECTION:{
+				if(worldIn.isRemote){
+					if(playerIn.isSneaking()){
+						if(settings.getPos() != null){
+							settings.setPos(null);
+							settings.sendPacketToServer(handIn);
+						}else{
+							changeMode = true;
+						}
+					}
+				}
+				break;
+			}
+			case MULTIBLOCK_SELECTION:{
+				if(worldIn.isRemote){
+					if(!playerIn.isSneaking()){
+						Minecraft.getInstance().displayGuiScreen(new ProjectorScreen(handIn, held));
 					}else{
 						changeMode = true;
 					}
 				}
+				break;
 			}
-			
-		}else if(settings.getMode() == Mode.MULTIBLOCK_SELECTION){
-			if(worldIn.isRemote){
-				if(!playerIn.isSneaking()){
-					Minecraft.getInstance().displayGuiScreen(new ProjectorScreen(handIn, held));
-				}else{
-					changeMode = true;
-				}
-			}
+			default:break;
 		}
 		
 		if(worldIn.isRemote && changeMode){
@@ -685,6 +693,18 @@ public class ProjectorItem extends IPItemBase{
 	@Mod.EventBusSubscriber(modid = ImmersivePetroleum.MODID, value = Dist.CLIENT)
 	public static class ClientInputHandler{
 		static boolean shiftHeld = false;
+		
+		@SubscribeEvent
+		public static void onPlayerTick(TickEvent.PlayerTickEvent event){
+			if(event.side == LogicalSide.CLIENT && event.player != null && event.player == ClientUtils.mc().getRenderViewEntity()){
+				if(event.phase == Phase.END){
+					if(!ClientProxy.keybind_preview_flip.isInvalid() && ClientProxy.keybind_preview_flip.isPressed() && shiftHeld){
+						doAFlip();
+					}
+				}
+			}
+		}
+		
 		@SubscribeEvent
 		public static void handleScroll(InputEvent.MouseScrollEvent event){
 			double delta = event.getScrollDelta();
@@ -735,18 +755,10 @@ public class ProjectorItem extends IPItemBase{
 					}
 				}
 			}
-			
-			if(shiftHeld && ClientProxy.keybind_preview_flip.isPressed()){
-				doAFlip();
-			}
 		}
 		
 		@SubscribeEvent
-		public static void handleMouseInput(InputEvent.MouseInputEvent event){
-			if(ClientProxy.keybind_preview_flip.isPressed()){
-				doAFlip();
-			}
-		}
+		public static void handleMouseInput(InputEvent.MouseInputEvent event){}
 		
 		private static void doAFlip(){
 			PlayerEntity player = ClientUtils.mc().player;

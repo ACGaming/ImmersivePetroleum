@@ -13,9 +13,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
 import blusunrize.immersiveengineering.client.gui.elements.GuiReactiveList;
+import blusunrize.immersiveengineering.common.blocks.multiblocks.UnionMultiblock;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.common.items.ProjectorItem;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
+import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.Screen;
@@ -23,13 +25,23 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.AbstractButton;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.vector.Quaternion;
+import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.gen.feature.template.Template;
+import net.minecraftforge.client.model.data.EmptyModelData;
+import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.common.util.Lazy;
 
 public class ProjectorScreen extends Screen{
@@ -64,6 +76,7 @@ public class ProjectorScreen extends Screen{
 		super(new StringTextComponent("projector"));
 		this.settings = new Settings(projector);
 		this.hand = hand;
+		this.multiblocks = Lazy.of(() -> MultiblockHandler.getMultiblocks());
 	}
 	
 	@Override
@@ -73,8 +86,6 @@ public class ProjectorScreen extends Screen{
 		
 		this.guiLeft = (this.width - this.xSize) / 2;
 		this.guiTop = (this.height - this.ySize) / 2;
-		
-		this.multiblocks = Lazy.of(() -> MultiblockHandler.getMultiblocks());
 		
 		this.searchField = addButton(new SearchField(this.font, this.guiLeft + 23, this.guiTop + 11));
 		
@@ -102,11 +113,11 @@ public class ProjectorScreen extends Screen{
 	
 	private void listaction(Button button){
 		GuiReactiveList l = (GuiReactiveList) button;
-		String str = this.listEntries[l.selectedOption];
-		IMultiblock mb = this.multiblocks.get().get(Integer.valueOf(str));
-		
-		ImmersivePetroleum.log.info(l.selectedOption + " -> \"" + str + "\" -> " + mb.getUniqueName());
-		this.settings.setMultiblock(mb);
+		if(l.selectedOption >= 0 && l.selectedOption < listEntries.length){
+			String str = this.listEntries[l.selectedOption];
+			IMultiblock mb = this.multiblocks.get().get(Integer.valueOf(str));
+			this.settings.setMultiblock(mb);
+		}
 	}
 	
 	private void updatelist(){
@@ -123,9 +134,14 @@ public class ProjectorScreen extends Screen{
 		// Lazy search based on content
 		list.removeIf(str -> {
 			IMultiblock mb = this.multiblocks.get().get(Integer.valueOf(str));
-			String name = I18n.format("desc.immersiveengineering.info.multiblock.IE:" + ProjectorItem.getActualMBName(mb));
+			String name;
+			if(mb instanceof UnionMultiblock && mb.getUniqueName().getPath().contains("excavator_demo")){
+				name = I18n.format("desc.immersiveengineering.info.multiblock.IE:Excavator")+"2";
+			}else{
+				name = I18n.format("desc.immersiveengineering.info.multiblock.IE:" + ProjectorItem.getActualMBName(mb));
+			}
 			
-			return !name.contains(this.searchField.getText());
+			return !name.toLowerCase().contains(this.searchField.getText().toLowerCase());
 		});
 		
 		this.listEntries = list.toArray(new String[0]);
@@ -133,6 +149,9 @@ public class ProjectorScreen extends Screen{
 		guilist.setPadding(1, 1, 1, 1);
 		guilist.setTranslationFunc(str -> {
 			IMultiblock mb = this.multiblocks.get().get(Integer.valueOf(str));
+			if(mb instanceof UnionMultiblock && mb.getUniqueName().getPath().contains("excavator_demo")){
+				return I18n.format("desc.immersiveengineering.info.multiblock.IE:Excavator")+"2";
+			}
 			return I18n.format("desc.immersiveengineering.info.multiblock.IE:" + ProjectorItem.getActualMBName(mb));
 		});
 		
@@ -148,6 +167,7 @@ public class ProjectorScreen extends Screen{
 		if(b != -1) this.children.set(b, this.list);
 	}
 	
+	float rotation = 0.0F;
 	@Override
 	public void render(MatrixStack matrix, int mouseX, int mouseY, float partialTicks){
 		background(matrix, mouseX, mouseY, partialTicks);
@@ -162,8 +182,81 @@ public class ProjectorScreen extends Screen{
 		}
 		
 		if(this.settings.getMultiblock() != null){
+			IMultiblock mb = this.settings.getMultiblock();
+			ITextComponent text;
+			if(mb instanceof UnionMultiblock && this.settings.getMultiblock().getUniqueName().getPath().contains("excavator_demo")){
+				text = new TranslationTextComponent("desc.immersiveengineering.info.multiblock.IE:Excavator").appendString("2");
+			}else{
+				text = new TranslationTextComponent("desc.immersiveengineering.info.multiblock.IE:" + ProjectorItem.getActualMBName(mb));
+			}
+			drawCenteredString(matrix, this.font, text, this.guiLeft + 127, this.guiTop - 10, -1);
+			
 			// TODO Multiblock Preview Rendering
+			IRenderTypeBuffer.Impl buffer = IRenderTypeBuffer.getImpl(Tessellator.getInstance().getBuffer());
+			try{
+				
+				this.rotation += 1.5F * partialTicks;
+				
+				Vector3i size = mb.getSize(null);
+				matrix.push();
+				{
+					matrix.translate(this.guiLeft + 190, this.guiTop + 90, 64);
+					matrix.scale(mb.getManualScale(), -mb.getManualScale(), 1);
+					matrix.rotate(new Quaternion(25, 0, 0, true));
+					matrix.rotate(new Quaternion(0, 45-(int)rotation, 0, true));
+					matrix.translate(size.getX() / -2F, size.getY() / -2F, size.getZ() / -2F);
+					
+					matrix.push();
+					{
+						if(mb.canRenderFormedStructure()){
+							mb.renderFormedStructure(matrix, disableLighting(buffer));
+						}else{
+							final BlockRendererDispatcher blockRender = Minecraft.getInstance().getBlockRendererDispatcher();
+							int it = 0;
+							List<Template.BlockInfo> infos = mb.getStructure(null);
+							for(Template.BlockInfo info:infos){
+								if(info.state.getMaterial() != Material.AIR && !mb.overwriteBlockRender(info.state, it++)){
+									matrix.push();
+									{
+										matrix.translate(info.pos.getX(), info.pos.getY(), info.pos.getZ());
+										int overlay = OverlayTexture.NO_OVERLAY;
+										IModelData modelData = EmptyModelData.INSTANCE;
+										blockRender.renderBlock(info.state, matrix, disableLighting(buffer), 0xF000F0, overlay, modelData);
+									}
+									matrix.pop();
+								}
+							}
+							//*/
+						}
+					}
+					matrix.pop();
+				}
+				matrix.pop();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+			buffer.finish();
 		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	private static IRenderTypeBuffer disableLighting(IRenderTypeBuffer in){
+		return type -> {
+			return in.getBuffer(new RenderType(
+					ImmersivePetroleum.MODID + ":" + type + "_no_lighting",
+					type.getVertexFormat(),
+					type.getDrawMode(),
+					type.getBufferSize(),
+					type.isUseDelegate(),
+					false, // needsSorting
+					() -> {
+						type.setupRenderState();
+						RenderSystem.disableLighting();
+					}, () -> {
+						type.clearRenderState();
+					}){
+			});
+		};
 	}
 	
 	private void background(MatrixStack matrix, int mouseX, int mouseY, float partialTicks){
