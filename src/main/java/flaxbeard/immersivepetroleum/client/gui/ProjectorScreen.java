@@ -1,5 +1,7 @@
 package flaxbeard.immersivepetroleum.client.gui;
 
+import static flaxbeard.immersivepetroleum.ImmersivePetroleum.MODID;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,7 +55,7 @@ import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.common.util.Lazy;
 
 public class ProjectorScreen extends Screen{
-	static final ResourceLocation GUI_TEXTURE = new ResourceLocation("immersivepetroleum", "textures/gui/projector.png");
+	static final ResourceLocation GUI_TEXTURE = new ResourceLocation(MODID, "textures/gui/projector.png");
 	
 	static final ITextComponent GUI_CONFIRM = translation("gui.immersivepetroleum.projector.button.confirm");
 	static final ITextComponent GUI_CANCEL = translation("gui.immersivepetroleum.projector.button.cancel");
@@ -62,6 +64,7 @@ public class ProjectorScreen extends Screen{
 	static final ITextComponent GUI_ROTATE_CCW = translation("gui.immersivepetroleum.projector.button.rccw");
 	static final ITextComponent GUI_UP = translation("gui.immersivepetroleum.projector.button.up");
 	static final ITextComponent GUI_DOWN = translation("gui.immersivepetroleum.projector.button.down");
+	static final ITextComponent GUI_SEARCH = translation("gui.immersivepetroleum.projector.search");
 	
 	private Minecraft mc = Minecraft.getInstance();
 	
@@ -369,120 +372,54 @@ public class ProjectorScreen extends Screen{
 	
 	// CLASSES
 	
-	class ConfirmButton extends ProjectorScreen.SpriteButton{
+	class ConfirmButton extends ProjectorScreen.ControlButton{
 		public ConfirmButton(int x, int y, Consumer<PButton> action){
-			super(x, y, 18, 18, 19, 185, action);
-		}
-		
-		@Override
-		public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY){
-			ProjectorScreen.this.renderTooltip(matrixStack, GUI_CONFIRM, mouseX, mouseY);
+			super(x, y, 18, 18, 19, 185, action, GUI_CONFIRM);
 		}
 	}
 	
-	class CancelButton extends ProjectorScreen.SpriteButton{
+	class CancelButton extends ProjectorScreen.ControlButton{
 		public CancelButton(int x, int y, Consumer<PButton> action){
-			super(x, y, 18, 18, 37, 185, action);
-		}
-		
-		@Override
-		public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY){
-			ProjectorScreen.this.renderTooltip(matrixStack, GUI_CANCEL, mouseX, mouseY);
+			super(x, y, 18, 18, 37, 185, action, GUI_CANCEL);
 		}
 	}
 	
-	class MirrorButton extends ProjectorScreen.SpriteButton{
+	class MirrorButton extends ProjectorScreen.ControlButton{
 		public MirrorButton(int x, int y, Consumer<PButton> action){
-			super(x, y, 18, 18, 1, 185, action);
-		}
-		
-		@Override
-		public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY){
-			ProjectorScreen.this.renderTooltip(matrixStack, GUI_MIRROR, mouseX, mouseY);
+			super(x, y, 18, 18, 1, 185, action, GUI_MIRROR);
 		}
 	}
 	
-	class RotateRightButton extends ProjectorScreen.SpriteButton{
+	class RotateRightButton extends ProjectorScreen.ControlButton{
 		public RotateRightButton(int x, int y, Consumer<PButton> action){
-			super(x, y, 18, 18, 55, 185, action);
-		}
-		
-		@Override
-		public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY){
-			ProjectorScreen.this.renderTooltip(matrixStack, GUI_ROTATE_CW, mouseX, mouseY);
+			super(x, y, 18, 18, 55, 185, action, GUI_ROTATE_CW);
 		}
 	}
 	
-	class RotateLeftButton extends ProjectorScreen.SpriteButton{
+	class RotateLeftButton extends ProjectorScreen.ControlButton{
 		public RotateLeftButton(int x, int y, Consumer<PButton> action){
-			super(x, y, 18, 18, 73, 185, action);
-		}
-		
-		@Override
-		public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY){
-			ProjectorScreen.this.renderTooltip(matrixStack, GUI_ROTATE_CCW, mouseX, mouseY);
+			super(x, y, 18, 18, 73, 185, action, GUI_ROTATE_CCW);
 		}
 	}
 	
-	class ScrollUpButton extends ProjectorScreen.SpriteButton{
-		public ScrollUpButton(int x, int y, Consumer<PButton> action){
-			super(x, y, 12, 12, 0, 202, action);
-		}
-		
-		@SuppressWarnings("deprecation")
-		@Override
-		public void renderButton(MatrixStack matrix, int mouseX, int mouseY, float partialTicks){
-			Minecraft.getInstance().getTextureManager().bindTexture(GUI_TEXTURE);
-			RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-			int i = this.xOverlay;
-			if(isHovered()){
-				i += this.width;
-			}
-			
-			blit(matrix, this.x, this.y, i, this.yOverlay, this.width, this.height);
-		}
-		
-		@Override
-		protected void buttonOverlay(MatrixStack matrix){
+	class ControlButton extends ProjectorScreen.SpriteButton{
+		ITextComponent hoverText;
+		public ControlButton(int x, int y, int width, int height, int overlayX, int overlayY, Consumer<PButton> action, ITextComponent hoverText){
+			super(x, y, width, height, overlayX, overlayY, action);
+			this.hoverText = hoverText;
 		}
 		
 		@Override
 		public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY){
-			ProjectorScreen.this.renderTooltip(matrixStack, GUI_UP, mouseX, mouseY);
-		}
-	}
-	
-	class ScrollDownButton extends ProjectorScreen.SpriteButton{
-		public ScrollDownButton(int x, int y, Consumer<PButton> action){
-			super(x, y, 12, 12, 0, 215, action);
-		}
-		
-		@SuppressWarnings("deprecation")
-		@Override
-		public void renderButton(MatrixStack matrix, int mouseX, int mouseY, float partialTicks){
-			Minecraft.getInstance().getTextureManager().bindTexture(GUI_TEXTURE);
-			RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-			int i = this.xOverlay;
-			if(isHovered()){
-				i += this.width;
+			if(this.hoverText!=null){
+				ProjectorScreen.this.renderTooltip(matrixStack, this.hoverText, mouseX, mouseY);
 			}
-			
-			blit(matrix, this.x, this.y, i, this.yOverlay, this.width, this.height);
-		}
-		
-		@Override
-		protected void buttonOverlay(MatrixStack matrix){
-		}
-		
-		@Override
-		public void renderToolTip(MatrixStack matrixStack, int mouseX, int mouseY){
-			ProjectorScreen.this.renderTooltip(matrixStack, GUI_DOWN, mouseX, mouseY);
 		}
 	}
 	
 	class SearchField extends TextFieldWidget{
 		public SearchField(FontRenderer font, int x, int y){
-			super(font, x, y, 77, 14, translation("gui.immersivepetroleum.projector.search"));
+			super(font, x, y, 77, 14, GUI_SEARCH);
 			setMaxStringLength(50);
 			setEnableBackgroundDrawing(false);
 			setVisible(true);
@@ -527,10 +464,6 @@ public class ProjectorScreen extends Screen{
 	
 	static ITextComponent translation(String key, Object... args){
 		return new TranslationTextComponent(key, args);
-	}
-	
-	static ITextComponent text(String str){
-		return new StringTextComponent(str);
 	}
 	
 	// STATIC CLASSES
