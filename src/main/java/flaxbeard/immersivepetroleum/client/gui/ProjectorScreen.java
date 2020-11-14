@@ -17,7 +17,7 @@ import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
 import blusunrize.immersiveengineering.client.gui.elements.GuiReactiveList;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.UnionMultiblock;
-import flaxbeard.immersivepetroleum.ImmersivePetroleum;
+import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.common.items.ProjectorItem;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
 import net.minecraft.block.BlockState;
@@ -32,7 +32,6 @@ import net.minecraft.client.gui.widget.button.AbstractButton;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.I18n;
@@ -218,7 +217,7 @@ public class ProjectorScreen extends Screen{
 					if(tempDisable && mb.canRenderFormedStructure()){
 						matrix.push();
 						{
-							mb.renderFormedStructure(matrix, disableLighting(buffer));
+							mb.renderFormedStructure(matrix, IPRenderTypes.disableLighting(buffer));
 						}
 						matrix.pop();
 					}else{
@@ -240,7 +239,7 @@ public class ProjectorScreen extends Screen{
 									if(te!=null){
 										modelData = te.getModelData();
 									}
-									blockRender.renderBlock(info.state, matrix, disableLighting(buffer), 0xF000F0, overlay, modelData);
+									blockRender.renderBlock(info.state, matrix, IPRenderTypes.disableLighting(buffer), 0xF000F0, overlay, modelData);
 								}
 								matrix.pop();
 							}
@@ -345,26 +344,6 @@ public class ProjectorScreen extends Screen{
 		public int getLightValue(BlockPos pos){
 			return 0xF000F0;
 		}
-	}
-	
-	@SuppressWarnings("deprecation")
-	private static IRenderTypeBuffer disableLighting(IRenderTypeBuffer in){
-		return type -> {
-			return in.getBuffer(new RenderType(
-					ImmersivePetroleum.MODID + ":" + type + "_no_lighting",
-					type.getVertexFormat(),
-					type.getDrawMode(),
-					type.getBufferSize(),
-					type.isUseDelegate(),
-					false, // needsSorting
-					() -> {
-						type.setupRenderState();
-						RenderSystem.disableLighting();
-					}, () -> {
-						type.clearRenderState();
-					}){
-			});
-		};
 	}
 	
 	private void background(MatrixStack matrix, int mouseX, int mouseY, float partialTicks){
