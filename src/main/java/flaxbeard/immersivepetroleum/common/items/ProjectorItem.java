@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.lwjgl.glfw.GLFW;
 
@@ -20,11 +21,10 @@ import blusunrize.immersiveengineering.client.ClientUtils;
 import blusunrize.immersiveengineering.common.blocks.IEBlocks;
 import blusunrize.immersiveengineering.common.blocks.metal.ConveyorBeltTileEntity;
 import blusunrize.immersiveengineering.common.blocks.metal.conveyors.BasicConveyor;
+import blusunrize.immersiveengineering.common.blocks.multiblocks.IEMultiblocks;
 import blusunrize.immersiveengineering.common.util.ItemNBTHelper;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import flaxbeard.immersivepetroleum.api.event.SchematicPlaceBlockEvent;
-import flaxbeard.immersivepetroleum.api.event.SchematicPlaceBlockPostEvent;
-import flaxbeard.immersivepetroleum.api.event.SchematicRenderBlockEvent;
+import flaxbeard.immersivepetroleum.api.event.ProjectorEvent;
 import flaxbeard.immersivepetroleum.client.ClientProxy;
 import flaxbeard.immersivepetroleum.client.ShaderUtil;
 import flaxbeard.immersivepetroleum.client.gui.ProjectorScreen;
@@ -32,6 +32,7 @@ import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPContent.Items;
 import flaxbeard.immersivepetroleum.common.util.projector.MultiblockProjection;
+import flaxbeard.immersivepetroleum.common.util.projector.MultiblockProjection.IMultiblockBlockReader;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings.Mode;
 import net.minecraft.block.BlockRenderType;
@@ -46,6 +47,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.PlayerEntity;
@@ -59,6 +61,7 @@ import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.Mutable;
@@ -71,15 +74,14 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
-import net.minecraft.world.gen.feature.template.Template;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.client.model.data.EmptyModelData;
+import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Constants.NBT;
 import net.minecraftforge.event.TickEvent;
@@ -113,8 +115,7 @@ public class ProjectorItem extends IPItemBase{
 				tooltip.add(new TranslationTextComponent("chat.immersivepetroleum.info.schematic.center", x, y, z).mergeStyle(TextFormatting.DARK_GRAY));
 			}
 			
-			ITextComponent rotation = new TranslationTextComponent("chat.immersivepetroleum.info.projector.rotated." + Direction.byHorizontalIndex(settings.getRotation().ordinal()))
-					.mergeStyle(TextFormatting.DARK_GRAY);
+			ITextComponent rotation = new TranslationTextComponent("chat.immersivepetroleum.info.projector.rotated." + Direction.byHorizontalIndex(settings.getRotation().ordinal())).mergeStyle(TextFormatting.DARK_GRAY);
 			tooltip.add(rotation);
 			
 			String flipped = I18n.format("chat.immersivepetroleum.info.projector.flipped." + (settings.isMirrored() ? "yes" : "no"));
@@ -139,10 +140,10 @@ public class ProjectorItem extends IPItemBase{
 			if(settings.getMultiblock() != null){
 				String name = getActualMBName(settings.getMultiblock());
 				
-				return new TranslationTextComponent(selfKey + ".specific", I18n.format("desc.immersiveengineering.info.multiblock.IE:" + name));
+				return new TranslationTextComponent(selfKey + ".specific", I18n.format("desc.immersiveengineering.info.multiblock.IE:" + name)).mergeStyle(TextFormatting.GOLD);
 			}
 		}
-		return new TranslationTextComponent(selfKey);
+		return new TranslationTextComponent(selfKey).mergeStyle(TextFormatting.GOLD);
 	}
 	
 	/** Name cache for {@link ProjectorItem#getActualMBName(IMultiblock)} */
@@ -159,7 +160,6 @@ public class ProjectorItem extends IPItemBase{
 			}
 			
 			nameCache.put(multiblock.getClass(), name);
-			//System.out.println(multiblock.getClass().getSimpleName()+" -> "+name);
 		}
 		
 		return nameCache.get(multiblock.getClass());
@@ -254,11 +254,11 @@ public class ProjectorItem extends IPItemBase{
 					}
 					
 					Predicate<MultiblockProjection.Info> pred = layer -> {
-						SchematicPlaceBlockEvent event = new SchematicPlaceBlockEvent(layer.multiblock, world, layer.tPos, layer.blockInfo.pos, layer.blockInfo.state, layer.blockInfo.nbt, settings.getRotation());
+						ProjectorEvent.PlaceBlock event = new ProjectorEvent.PlaceBlock(layer.blockAccess, layer.templatePos, world, layer.tPos, layer.blockAccess.getBlockState(layer.templatePos), settings.getRotation());
 						if(!MinecraftForge.EVENT_BUS.post(event)){
 							world.setBlockState(layer.tPos.add(hit), event.getState());
 							
-							SchematicPlaceBlockPostEvent postEvent = new SchematicPlaceBlockPostEvent(layer.multiblock, world, layer.tPos, layer.blockInfo.pos, event.getState(), layer.blockInfo.nbt, settings.getRotation());
+							ProjectorEvent.PlaceBlockPost postEvent = new ProjectorEvent.PlaceBlockPost(layer.blockAccess, event.getTemplatePos(), world, layer.tPos, event.getState(), settings.getRotation());
 							MinecraftForge.EVENT_BUS.post(postEvent);
 						}
 						
@@ -322,14 +322,15 @@ public class ProjectorItem extends IPItemBase{
 		return hit;
 	}
 	
+	// TODO Dont think this is nessesary anymore
 	@SubscribeEvent
-	public static void handleConveyorPlace(SchematicPlaceBlockPostEvent event){
-		IMultiblock mb = event.getMultiblock();
-		BlockState state = event.getState();
-		String mbName = mb.getUniqueName().getPath();
-		
-		if(mbName.equals("multiblocks/auto_workbench") || mbName.equals("multiblocks/bottling_machine") || mbName.equals("multiblocks/assembler") || mbName.equals("multiblocks/metal_press")){
-			if(state.getBlock() == IEBlocks.MetalDevices.CONVEYORS.get(BasicConveyor.NAME)){
+	public static void handleConveyorPlace(ProjectorEvent.PlaceBlockPost event){
+		ResourceLocation rl = event.getMultiblock().getUniqueName();
+		if(rl.equals(IEMultiblocks.AUTO_WORKBENCH.getUniqueName()) ||
+				rl.equals(IEMultiblocks.BOTTLING_MACHINE.getUniqueName()) ||
+				rl.equals(IEMultiblocks.ASSEMBLER.getUniqueName()) ||
+				rl.equals(IEMultiblocks.METAL_PRESS.getUniqueName())){
+			if(event.getState().getBlock() == IEBlocks.MetalDevices.CONVEYORS.get(BasicConveyor.NAME)){
 				TileEntity te = event.getWorld().getTileEntity(event.getWorldPos());
 				if(te instanceof ConveyorBeltTileEntity){
 					
@@ -352,7 +353,7 @@ public class ProjectorItem extends IPItemBase{
 				matrix.push();
 				{
 					ItemStack secondItem = mc.player.getHeldItemOffhand();
-					boolean off = !secondItem.isEmpty() && secondItem.getItem() == Items.projector && ItemNBTHelper.hasKey(secondItem, "multiblock");
+					boolean off = !secondItem.isEmpty() && secondItem.getItem() == Items.projector && ItemNBTHelper.hasKey(secondItem, "settings");
 					
 					// Anti-Jiggle when moving
 					Vector3d renderView = ClientUtils.mc().gameRenderer.getActiveRenderInfo().getProjectedView();
@@ -378,13 +379,12 @@ public class ProjectorItem extends IPItemBase{
 		public static void renderSchematic(MatrixStack matrix, Settings settings, PlayerEntity player, World world, float partialTicks, boolean shouldRenderMoving){
 			if(settings.getMultiblock() == null) return;
 			
-			final Mutable hit = new Mutable(FULL_MAX.getX(), FULL_MAX.getY(), FULL_MAX.getZ());
 			Vector3i size = settings.getMultiblock().getSize(world);
-			boolean isPlaced = false;
-			
+			final Mutable hit = new Mutable(FULL_MAX.getX(), FULL_MAX.getY(), FULL_MAX.getZ());
+			final MutableBoolean isPlaced = new MutableBoolean(false);
 			if(settings.getPos() != null){
 				hit.setPos(settings.getPos());
-				isPlaced = true;
+				isPlaced.setTrue();
 				
 			}else if(shouldRenderMoving && ClientUtils.mc().objectMouseOver != null && ClientUtils.mc().objectMouseOver.getType() == Type.BLOCK){
 				BlockRayTraceResult blockRTResult = (BlockRayTraceResult) ClientUtils.mc().objectMouseOver;
@@ -405,8 +405,11 @@ public class ProjectorItem extends IPItemBase{
 				if(settings.getMultiblock().getUniqueName().getPath().contains("excavator_demo") || settings.getMultiblock().getUniqueName().getPath().contains("bucket_wheel")){
 					hit.setAndOffset(hit, 0, -2, 0);
 				}
-	
-				final boolean placedCopy = isPlaced;
+				
+				MultiblockProjection projection = new MultiblockProjection(world, settings.getMultiblock());
+				projection.setRotation(settings.getRotation());
+				projection.setFlip(settings.isMirrored());
+				
 				final List<RenderInfo> toRender = new ArrayList<>();
 				final MutableInt currentLayer = new MutableInt();
 				final MutableInt badBlocks = new MutableInt();
@@ -419,37 +422,33 @@ public class ProjectorItem extends IPItemBase{
 						return true; // breaks the internal loop
 					}
 					
-					if(placedCopy){ // Render only slices when placed
+					if(isPlaced.booleanValue()){ // Render only slices when placed
 						if(layer == currentLayer.getValue()){
 							boolean skip = false;
 							BlockState toCompare = world.getBlockState(info.tPos.add(hit));
-							if(info.blockInfo.state.getBlock() == toCompare.getBlock()){
-								toRender.add(new RenderInfo(RenderInfo.Layer.PERFECT, info.blockInfo, info.settings, info.tPos));
+							if(info.blockAccess.getBlockState(info.templatePos).getBlock() == toCompare.getBlock()){
+								toRender.add(new RenderInfo(RenderInfo.Layer.PERFECT, info.blockAccess, info.templatePos, info.settings, info.tPos));
 								goodBlocks.increment();
 								skip = true;
 							}else{
 								// Making it this far only needs an air check, the other already proved to be false.
 								if(toCompare.getBlock() != Blocks.AIR){
-									toRender.add(new RenderInfo(RenderInfo.Layer.BAD, info.blockInfo, info.settings, info.tPos));
+									toRender.add(new RenderInfo(RenderInfo.Layer.BAD, info.blockAccess, info.templatePos, info.settings, info.tPos));
 									skip = true;
 								}
 								badBlocks.increment();
 							}
 							
 							if(!skip){
-								toRender.add(new RenderInfo(RenderInfo.Layer.ALL, info.blockInfo, info.settings, info.tPos));
+								toRender.add(new RenderInfo(RenderInfo.Layer.ALL, info.blockAccess, info.templatePos, info.settings, info.tPos));
 							}
 						}
 					}else{ // Render all when not placed
-						toRender.add(new RenderInfo(RenderInfo.Layer.ALL, info.blockInfo, info.settings, info.tPos));
+						toRender.add(new RenderInfo(RenderInfo.Layer.ALL, info.blockAccess, info.templatePos, info.settings, info.tPos));
 					}
 					
 					return false;
 				};
-				
-				MultiblockProjection projection = new MultiblockProjection(world, settings.getMultiblock());
-				projection.setRotation(settings.getRotation());
-				projection.setFlip(settings.isMirrored());
 				projection.processAll(bipred);
 				
 				boolean perfect = (goodBlocks.getValue() == projection.getBlockCount());
@@ -468,17 +467,16 @@ public class ProjectorItem extends IPItemBase{
 					return 0;
 				});
 				
-//				ClientUtils.bindAtlas();
 				ItemStack heldStack = player.getHeldItemMainhand();
 				for(RenderInfo rInfo:toRender){
 					switch(rInfo.layer){
 						case ALL:{ // All / Slice
-							Template.BlockInfo info = rInfo.blockInfo;
-							float alpha = heldStack.getItem() == info.state.getBlock().asItem() ? 1.0F : .5F;
+							float alpha = heldStack.getItem() == rInfo.getState().getBlock().asItem() ? 0.75F : 0.25F;
 							
 							matrix.push();
 							{
-								renderPhantom(matrix, settings.getMultiblock(), world, info, rInfo.worldPos, flicker, alpha, partialTicks, settings.isMirrored(), rInfo.settings.getRotation());
+								//renderPhantom(matrix, settings.getMultiblock(), world, info, rInfo.worldPos, flicker, alpha, partialTicks, settings.isMirrored(), rInfo.settings.getRotation());
+								renderPhantom(matrix, projection.getMultiblockBlockAccess(), world, rInfo.templatePos, rInfo.worldPos, flicker, alpha, partialTicks, settings.isMirrored(), rInfo.settings.getRotation());
 							}
 							matrix.pop();
 							break;
@@ -494,15 +492,19 @@ public class ProjectorItem extends IPItemBase{
 							break;
 						}
 						case PERFECT:{
+							int x = rInfo.worldPos.getX();
+							int y = rInfo.worldPos.getY();
+							int z = rInfo.worldPos.getZ();
+							
 							min.setPos(
-									(rInfo.worldPos.getX() < min.getX() ? rInfo.worldPos.getX() : min.getX()),
-									(rInfo.worldPos.getY() < min.getY() ? rInfo.worldPos.getY() : min.getY()),
-									(rInfo.worldPos.getZ() < min.getZ() ? rInfo.worldPos.getZ() : min.getZ()));
+									(x < min.getX() ? x : min.getX()),
+									(y < min.getY() ? y : min.getY()),
+									(z < min.getZ() ? z : min.getZ()));
 							
 							max.setPos(
-									(rInfo.worldPos.getX() > max.getX() ? rInfo.worldPos.getX() : max.getX()),
-									(rInfo.worldPos.getY() > max.getY() ? rInfo.worldPos.getY() : max.getY()),
-									(rInfo.worldPos.getZ() > max.getZ() ? rInfo.worldPos.getZ() : max.getZ()));
+									(x > max.getX() ? x : max.getX()),
+									(y > max.getY() ? y : max.getY()),
+									(z > max.getZ() ? z : max.getZ()));
 							break;
 						}
 					}
@@ -520,7 +522,7 @@ public class ProjectorItem extends IPItemBase{
 					if(!player.getHeldItemOffhand().isEmpty() && player.getHeldItemOffhand().getItem() == IPContent.debugItem){
 						matrix.push();
 						{
-							// Min (Magenta/Purple)
+							// Min (Red)
 							matrix.translate(min.getX(), min.getY(), min.getZ());
 							renderCenteredOutlineBox(matrix, 0xFF0000, flicker);
 						}
@@ -528,7 +530,7 @@ public class ProjectorItem extends IPItemBase{
 						
 						matrix.push();
 						{
-							// Max (Yellow)
+							// Max (Greem)
 							matrix.translate(max.getX(), max.getY(), max.getZ());
 							renderCenteredOutlineBox(matrix, 0x00FF00, flicker);
 						}
@@ -536,7 +538,7 @@ public class ProjectorItem extends IPItemBase{
 						
 						matrix.push();
 						{
-							// Center (White)
+							// Center (Blue)
 							BlockPos center = min.toImmutable().add(max);
 							matrix.translate(center.getX() / 2, center.getY() / 2, center.getZ() / 2);
 							
@@ -548,34 +550,37 @@ public class ProjectorItem extends IPItemBase{
 			}
 		}
 		
-		private static void renderPhantom(MatrixStack matrix, IMultiblock multiblock, World world, Template.BlockInfo info, BlockPos wPos, float flicker, float alpha, float partialTicks, boolean flipXZ, Rotation rotation){
+		private static void renderPhantom(MatrixStack matrix, IMultiblockBlockReader blockAccess, World world, BlockPos templatePos, BlockPos worldPos, float flicker, float alpha, float partialTicks, boolean flipXZ, Rotation rotation){
 			BlockRendererDispatcher dispatcher = ClientUtils.mc().getBlockRendererDispatcher();
 			BlockModelRenderer blockRenderer = dispatcher.getBlockModelRenderer();
 			BlockColors blockColors = ClientUtils.mc().getBlockColors();
 			
-			matrix.translate(wPos.getX(), wPos.getY(), wPos.getZ()); // Centers the preview block
+			matrix.translate(worldPos.getX(), worldPos.getY(), worldPos.getZ()); // Centers the preview block
 			IRenderTypeBuffer.Impl buffer = IRenderTypeBuffer.getImpl(Tessellator.getInstance().getBuffer());
 			
-			SchematicRenderBlockEvent renderEvent = new SchematicRenderBlockEvent(multiblock, world, wPos, info.pos, info.state, info.nbt, rotation);
+			ProjectorEvent.RenderBlock renderEvent = new ProjectorEvent.RenderBlock(blockAccess, templatePos, world, worldPos, blockAccess.getBlockState(templatePos), rotation);
 			if(!MinecraftForge.EVENT_BUS.post(renderEvent)){
 				BlockState state = renderEvent.getState();
 				
-//				dispatcher.renderBlock(renderEvent.getState(), matrix, buffer, 0xF000F0, 0, EmptyModelData.INSTANCE);
+				IModelData modelData = EmptyModelData.INSTANCE;
+				TileEntity te = blockAccess.getTileEntity(templatePos);
+				if(te != null){
+					modelData = te.getModelData();
+				}
 				
 				BlockRenderType blockrendertype = state.getRenderType();
 				if(blockrendertype != BlockRenderType.INVISIBLE){
 					if(blockrendertype == BlockRenderType.MODEL){
 						IBakedModel ibakedmodel = dispatcher.getModelForState(state);
-						int i = blockColors.getColor(state, (IBlockDisplayReader) null, (BlockPos) null, 0);
-						float f = (float) (i >> 16 & 255) / 255.0F;
-						float f1 = (float) (i >> 8 & 255) / 255.0F;
-						float f2 = (float) (i & 255) / 255.0F;
-						blockRenderer.renderModel(matrix.getLast(), buffer.getBuffer(RenderType.getTranslucent()), state, ibakedmodel, f, f1, f2, 0xF000F0, 0, EmptyModelData.INSTANCE);
-//						blockRenderer.renderModel(matrix.getLast(), buffer.getBuffer(RenderTypeLookup.func_239220_a_(state, false)), state, ibakedmodel, f, f1, f2, 0xF000F0, 0, EmptyModelData.INSTANCE);
+						int i = blockColors.getColor(state, null, null, 0);
+						float red = (i >> 16 & 0xFF) / 255F;
+						float green = (i >> 8 & 0xFF) / 255F;
+						float blue = (i & 0xFF) / 255F;
+						blockRenderer.renderModel(matrix.getLast(), buffer.getBuffer(RenderType.getTranslucent()), state, ibakedmodel, red, green, blue, 0xF000F0, OverlayTexture.NO_OVERLAY, modelData);
 						
 					}else if(blockrendertype == BlockRenderType.ENTITYBLOCK_ANIMATED){
 						ItemStack stack = new ItemStack(state.getBlock());
-						stack.getItem().getItemStackTileEntityRenderer().func_239207_a_(stack, ItemCameraTransforms.TransformType.NONE, matrix, buffer, 0xF000F0, 0);
+						stack.getItem().getItemStackTileEntityRenderer().func_239207_a_(stack, ItemCameraTransforms.TransformType.NONE, matrix, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY);
 					}
 				}
 			}
@@ -591,44 +596,47 @@ public class ProjectorItem extends IPItemBase{
 			
 			float alpha = 0.25F + (0.5F * flicker);
 			
-			float xMax = Math.abs(max.getX() - min.getX()) + 1;
-			float yMax = Math.abs(max.getY() - min.getY()) + 1;
-			float zMax = Math.abs(max.getZ() - min.getZ()) + 1;
+			float xMin = min.getX();
+			float yMin = min.getY();
+			float zMin = min.getZ();
 			
-			float r = ((rgb >> 16) & 0xFF) / 255.0F;
-			float g = ((rgb >> 8) & 0xFF) / 255.0F;
-			float b = ((rgb >> 0) & 0xFF) / 255.0F;
+			float xMax = max.getX() + 1F;
+			float yMax = max.getY() + 1F;
+			float zMax = max.getZ() + 1F;
 			
-			matrix.translate(-1, 0, -1);
-			matrix.scale(xMax, yMax, zMax);
+			float r = ((rgb >> 16) & 0xFF) / 255F;
+			float g = ((rgb >> 8)  & 0xFF) / 255F;
+			float b = ((rgb >> 0)  & 0xFF) / 255F;
+			
+			//matrix.scale(xScale, yScale, zScale);
 			Matrix4f mat = matrix.getLast().getMatrix();
 			
-			builder.pos(mat, 0.0F, 1.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 1.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 1.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 1.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 1.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 0.0F, 1.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 0.0F, 1.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 0.0F, 1.0F, 0.0F).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMax, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMax, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMax, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMax, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMax, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMax, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMax, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMax, zMin).color(r, g, b, alpha).endVertex();
 			
-			builder.pos(mat, 0.0F, 1.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 0.0F, 0.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 1.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 0.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 0.0F, 1.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 0.0F, 0.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 1.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 0.0F, 1.0F).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMax, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMin, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMax, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMin, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMax, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMin, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMax, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMin, zMax).color(r, g, b, alpha).endVertex();
 			
-			builder.pos(mat, 0.0F, 0.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 0.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 0.0F, 0.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 0.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 1.0F, 0.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 0.0F, 0.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 0.0F, 0.0F, 1.0F).color(r, g, b, alpha).endVertex();
-			builder.pos(mat, 0.0F, 0.0F, 0.0F).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMin, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMin, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMin, zMin).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMin, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMax, yMin, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMin, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMin, zMax).color(r, g, b, alpha).endVertex();
+			builder.pos(mat, xMin, yMin, zMin).color(r, g, b, alpha).endVertex();
 			
 			buffer.finish();
 		}
@@ -677,14 +685,13 @@ public class ProjectorItem extends IPItemBase{
 			buffer.finish();
 		}
 		
+		// TODO Dont think this is nessesary anymore
 		@SubscribeEvent
-		public static void handleConveyorsAndPipes(SchematicRenderBlockEvent event){
-			BlockState state = event.getState();
-			
-			if(state.getBlock() == IEBlocks.MetalDevices.fluidPipe){
+		public static void handleConveyorsAndPipes(ProjectorEvent.RenderBlock event){
+			if(event.getState().getBlock() == IEBlocks.MetalDevices.fluidPipe){
 				event.setState(IPContent.Blocks.dummyPipe.getDefaultState());
-			}else if(state.getBlock() == IEBlocks.MetalDevices.CONVEYORS.get(BasicConveyor.NAME)){
-				// event.setState(IPContent.Blocks.dummyConveyor.getDefaultState());
+			}else if(event.getState().getBlock() == IEBlocks.MetalDevices.CONVEYORS.get(BasicConveyor.NAME)){
+//				event.setState(IPContent.Blocks.dummyConveyor.getDefaultState());
 			}
 		}
 	}
@@ -784,14 +791,21 @@ public class ProjectorItem extends IPItemBase{
 	
 	private static class RenderInfo{
 		public final Layer layer;
-		public final Template.BlockInfo blockInfo;
+		public final IMultiblockBlockReader blockAccess;
+		public final BlockPos templatePos;
 		public final BlockPos worldPos;
 		public final PlacementSettings settings;
-		public RenderInfo(Layer layer, Template.BlockInfo blockInfo, PlacementSettings settings, BlockPos worldPos){
+		
+		public RenderInfo(Layer layer, IMultiblockBlockReader blockAccess, BlockPos templatePos, PlacementSettings settings, BlockPos worldPos){
 			this.layer = layer;
-			this.blockInfo = blockInfo;
+			this.blockAccess = blockAccess;
+			this.templatePos = templatePos;
 			this.worldPos = worldPos;
 			this.settings = settings;
+		}
+		
+		public BlockState getState(){
+			return this.blockAccess.getBlockState(this.templatePos);
 		}
 		
 		public static enum Layer{

@@ -2,11 +2,8 @@ package flaxbeard.immersivepetroleum.client.gui;
 
 import static flaxbeard.immersivepetroleum.ImmersivePetroleum.MODID;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -21,9 +18,9 @@ import blusunrize.immersiveengineering.client.gui.elements.GuiReactiveList;
 import blusunrize.immersiveengineering.common.blocks.multiblocks.UnionMultiblock;
 import flaxbeard.immersivepetroleum.client.render.IPRenderTypes;
 import flaxbeard.immersivepetroleum.common.items.ProjectorItem;
+import flaxbeard.immersivepetroleum.common.util.projector.MultiblockProjection;
+import flaxbeard.immersivepetroleum.common.util.projector.MultiblockProjection.IMultiblockBlockReader;
 import flaxbeard.immersivepetroleum.common.util.projector.Settings;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -37,18 +34,16 @@ import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.fluid.FluidState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Quaternion;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.IBlockReader;
 import net.minecraft.world.gen.feature.template.Template;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
@@ -74,7 +69,7 @@ public class ProjectorScreen extends Screen{
 	private int guiTop;
 	
 	private Lazy<List<IMultiblock>> multiblocks;
-	private Test blockAccessTest;
+	private IMultiblockBlockReader blockAccess;
 	private GuiReactiveList list;
 	private String[] listEntries;
 	
@@ -106,16 +101,16 @@ public class ProjectorScreen extends Screen{
 			this.settings.sendPacketToServer(this.hand);
 			Minecraft.getInstance().currentScreen.closeScreen();
 		}));
-		addButton(new CancelButton(this.guiLeft + 153, this.guiTop + 5, but -> {
+		addButton(new CancelButton(this.guiLeft + 152, this.guiTop + 5, but -> {
 			Minecraft.getInstance().currentScreen.closeScreen();
 		}));
-		addButton(new MirrorButton(this.guiLeft + 174, this.guiTop + 5, but -> {
+		addButton(new MirrorButton(this.guiLeft + 172, this.guiTop + 5, this.settings, but -> {
 			this.settings.flip();
 		}));
-		addButton(new RotateLeftButton(this.guiLeft + 195, this.guiTop + 5, but -> {
+		addButton(new RotateLeftButton(this.guiLeft + 192, this.guiTop + 5, but -> {
 			this.settings.rotateCCW();
 		}));
-		addButton(new RotateRightButton(this.guiLeft + 216, this.guiTop + 5, but -> {
+		addButton(new RotateRightButton(this.guiLeft + 232, this.guiTop + 5, but -> {
 			this.settings.rotateCW();
 		}));
 		
@@ -192,6 +187,24 @@ public class ProjectorScreen extends Screen{
 			}
 		}
 		
+		{
+			int x = this.guiLeft + 212;
+			int y = this.guiTop + 5;
+			
+			GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+			Minecraft.getInstance().getTextureManager().bindTexture(GUI_TEXTURE);
+			blit(matrix, x, y, 18, 166, 18, 18);
+			
+			Direction dir = Direction.byHorizontalIndex(this.settings.getRotation().ordinal());
+			drawCenteredString(matrix, this.font, new StringTextComponent(dir.toString().toUpperCase().substring(0, 1)), x + 9, y + 5, -1);
+			
+			if(mouseX > x && mouseX < x + 18 && mouseY > y && mouseY < y + 18){
+				ITextComponent text = new TranslationTextComponent("chat.immersivepetroleum.info.projector.rotated." + dir);
+				renderTooltip(matrix, text, mouseX, mouseY);
+			}
+		}
+		
+		
 		if(this.settings.getMultiblock() != null){
 			IMultiblock mb = this.settings.getMultiblock();
 			ITextComponent text;
@@ -224,8 +237,8 @@ public class ProjectorScreen extends Screen{
 						}
 						matrix.pop();
 					}else{
-						if(this.blockAccessTest==null || (this.blockAccessTest.multiblock.getUniqueName().equals(mb.getUniqueName()))){
-							this.blockAccessTest = new Test(mb);
+						if(this.blockAccess==null || (this.blockAccess.getMultiblock().getUniqueName().equals(mb.getUniqueName()))){
+							this.blockAccess = MultiblockProjection.getBlockAccessFor(mb);
 						}
 						
 						final BlockRendererDispatcher blockRender = Minecraft.getInstance().getBlockRendererDispatcher();
@@ -238,8 +251,8 @@ public class ProjectorScreen extends Screen{
 									matrix.translate(info.pos.getX(), info.pos.getY(), info.pos.getZ());
 									int overlay = OverlayTexture.NO_OVERLAY;
 									IModelData modelData = EmptyModelData.INSTANCE;
-									TileEntity te = this.blockAccessTest.getTileEntity(info.pos);
-									if(te!=null){
+									TileEntity te = this.blockAccess.getTileEntity(info.pos);
+									if(te != null){
 										modelData = te.getModelData();
 									}
 									blockRender.renderBlock(info.state, matrix, IPRenderTypes.disableLighting(buffer), 0xF000F0, overlay, modelData);
@@ -254,98 +267,6 @@ public class ProjectorScreen extends Screen{
 				e.printStackTrace();
 			}
 			buffer.finish();
-		}
-	}
-	
-	// TODO Get rid of this once access to ManualElementMultiblock.MultiblockBlockAccess has been granted.
-	static class Test implements IBlockReader{
-		static Field field_cachedBlockState;
-		
-		IMultiblock multiblock;
-		Map<BlockPos, TileEntity> tiles;
-		Map<BlockPos, BlockState> states;
-		int size;
-		Test(IMultiblock multiblock){
-			this.multiblock = multiblock;
-			this.tiles = new HashMap<>();
-			this.states = new HashMap<>();
-			List<Template.BlockInfo> list = multiblock.getStructure(null);
-			this.size = list.size();
-			
-			if(field_cachedBlockState == null){
-				try{
-					field_cachedBlockState = TileEntity.class.getDeclaredField("cachedBlockState");
-					field_cachedBlockState.setAccessible(true);
-				}catch(NoSuchFieldException e){
-					try{
-						field_cachedBlockState = TileEntity.class.getDeclaredField("field_195045_e");
-						field_cachedBlockState.setAccessible(true);
-					}catch(NoSuchFieldException e1){
-						e.printStackTrace();
-						e1.printStackTrace();
-						throw new RuntimeException(e1);
-					}
-				}
-			}
-			
-			if(field_cachedBlockState != null){
-				for(Template.BlockInfo info:list){
-					try{
-						this.states.put(info.pos, info.state);
-						if(info.nbt != null && !info.nbt.isEmpty()){
-							TileEntity te = TileEntity.readTileEntity(info.state, info.nbt);
-							if(te != null){
-								field_cachedBlockState.set(te, info.state);
-								this.tiles.put(info.pos, te);
-							}
-						}
-					}catch(Exception e){
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-		
-		@Override
-		public TileEntity getTileEntity(BlockPos pos){
-			if(this.states.containsKey(pos)){
-				Vector3i size = this.multiblock.getSize(null);
-				int x = pos.getX();
-				int y = pos.getY();
-				int z = pos.getZ();
-				int index = (size.getX() * size.getZ() * y) + (size.getX() * z) + x;
-				if(index <= this.size){
-					return this.tiles.get(pos);
-				}
-			}
-			
-			return null;
-		}
-		
-		@Override
-		public BlockState getBlockState(BlockPos pos){
-			if(this.states.containsKey(pos)){
-				Vector3i size = this.multiblock.getSize(null);
-				int x = pos.getX();
-				int y = pos.getY();
-				int z = pos.getZ();
-				int index = (size.getX() * size.getZ() * y) + (size.getX() * z) + x;
-				if(index <= this.size){
-					return this.states.get(pos);
-				}
-			}
-			
-			return Blocks.AIR.getDefaultState();
-		}
-		
-		@Override
-		public FluidState getFluidState(BlockPos pos){
-			return this.getBlockState(pos).getFluidState();
-		}
-
-		@Override
-		public int getLightValue(BlockPos pos){
-			return 0xF000F0;
 		}
 	}
 	
@@ -385,8 +306,19 @@ public class ProjectorScreen extends Screen{
 	}
 	
 	class MirrorButton extends ProjectorScreen.ControlButton{
-		public MirrorButton(int x, int y, Consumer<PButton> action){
+		Settings settings;
+		public MirrorButton(int x, int y, Settings settings, Consumer<PButton> action){
 			super(x, y, 18, 18, 1, 185, action, GUI_MIRROR);
+			this.settings = settings;
+		}
+		
+		@Override
+		protected void buttonOverlay(MatrixStack matrix){
+			int vOffset = this.yOverlay;
+			if(this.settings.isMirrored()){
+				vOffset += this.height;
+			}
+			blit(matrix, this.x + 1, this.y + 1, this.xOverlay, vOffset, this.iconSize, this.iconSize);
 		}
 	}
 	
