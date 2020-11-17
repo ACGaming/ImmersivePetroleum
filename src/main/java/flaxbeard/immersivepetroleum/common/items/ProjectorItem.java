@@ -91,54 +91,96 @@ public class ProjectorItem extends IPItemBase{
 		super(name, new Item.Properties().maxStackSize(1));
 	}
 	
-	@OnlyIn(Dist.CLIENT)
-	public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn){
-		Settings settings = getSettings(stack);
-		if(settings.getMultiblock() != null){
-			String name = getActualMBName(settings.getMultiblock());
-			
-			tooltip.add(new TranslationTextComponent("chat.immersivepetroleum.info.schematic.build0"));
-			tooltip.add(new TranslationTextComponent("chat.immersivepetroleum.info.schematic.build1", new TranslationTextComponent("desc.immersiveengineering.info.multiblock.IE:" + name)));
-			
-			Vector3i size = settings.getMultiblock().getSize(worldIn);
-			tooltip.add(new StringTextComponent(size.getX() + " x " + size.getY() + " x " + size.getZ()).mergeStyle(TextFormatting.DARK_GRAY));
-			
-			if(settings.getPos() != null){
-				int x = settings.getPos().getX();
-				int y = settings.getPos().getY();
-				int z = settings.getPos().getZ();
-				tooltip.add(new TranslationTextComponent("chat.immersivepetroleum.info.schematic.center", x, y, z).mergeStyle(TextFormatting.DARK_GRAY));
-			}
-			
-			ITextComponent rotation = new TranslationTextComponent("chat.immersivepetroleum.info.projector.rotated." + Direction.byHorizontalIndex(settings.getRotation().ordinal())).mergeStyle(TextFormatting.DARK_GRAY);
-			tooltip.add(rotation);
-			
-			String flipped = I18n.format("chat.immersivepetroleum.info.projector.flipped." + (settings.isMirrored() ? "yes" : "no"));
-			tooltip.add(new TranslationTextComponent("chat.immersivepetroleum.info.projector.flipped", flipped).mergeStyle(TextFormatting.DARK_GRAY));
-			
-			ITextComponent ctrl0 = new TranslationTextComponent("chat.immersivepetroleum.info.schematic.controls1").mergeStyle(TextFormatting.DARK_GRAY);
-			ITextComponent ctrl1 = new TranslationTextComponent("chat.immersivepetroleum.info.schematic.controls2", ClientProxy.keybind_preview_flip.func_238171_j_()).mergeStyle(TextFormatting.DARK_GRAY);
-			
-			tooltip.add(ctrl0);
-			tooltip.add(ctrl1);
-			
-		}else{
-			tooltip.add(new StringTextComponent(TextFormatting.DARK_GRAY + I18n.format("chat.immersivepetroleum.info.schematic.noMultiblock")));
-		}
-	}
-	
 	@Override
 	public ITextComponent getDisplayName(ItemStack stack){
 		String selfKey = getTranslationKey(stack);
 		if(stack.hasTag()){
 			Settings settings = getSettings(stack);
 			if(settings.getMultiblock() != null){
-				String name = getActualMBName(settings.getMultiblock());
+				String name = I18n.format("desc.immersiveengineering.info.multiblock.IE:" + getActualMBName(settings.getMultiblock()));
 				
-				return new TranslationTextComponent(selfKey + ".specific", I18n.format("desc.immersiveengineering.info.multiblock.IE:" + name)).mergeStyle(TextFormatting.GOLD);
+				return new TranslationTextComponent(selfKey + ".specific", name).mergeStyle(TextFormatting.GOLD);
 			}
 		}
 		return new TranslationTextComponent(selfKey).mergeStyle(TextFormatting.GOLD);
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	public void addInformation(ItemStack stack, World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn){
+		Settings settings = getSettings(stack);
+		if(settings.getMultiblock() != null){
+			Vector3i size = settings.getMultiblock().getSize(worldIn);
+			
+			String name = getActualMBName(settings.getMultiblock());
+			tooltip.add(new TranslationTextComponent("desc.immersivepetroleum.info.projector.build0"));
+			tooltip.add(new TranslationTextComponent("desc.immersivepetroleum.info.projector.build1", new TranslationTextComponent("desc.immersiveengineering.info.multiblock.IE:" + name)));
+			
+			if(isPressing(GLFW.GLFW_KEY_LEFT_SHIFT) || isPressing(GLFW.GLFW_KEY_RIGHT_SHIFT)){
+				ITextComponent mbSize = new TranslationTextComponent("desc.immersivepetroleum.info.projector.size", size.getX(),size.getY(),size.getZ())
+						.mergeStyle(TextFormatting.DARK_GRAY);
+				tooltip.add(mbSize);
+				
+				Direction dir = Direction.byHorizontalIndex(settings.getRotation().ordinal());
+				ITextComponent rotation = new TranslationTextComponent("desc.immersivepetroleum.info.projector.rotated." + dir)
+						.mergeStyle(TextFormatting.DARK_GRAY);
+				
+				ITextComponent flip;
+				if(settings.isMirrored()){
+					flip = new TranslationTextComponent("desc.immersivepetroleum.info.projector.flipped.true")
+							.mergeStyle(TextFormatting.DARK_GRAY);
+				}else{
+					flip = new TranslationTextComponent("desc.immersivepetroleum.info.projector.flipped.false")
+							.mergeStyle(TextFormatting.DARK_GRAY);
+				}
+				
+				if(settings.getPos() != null){
+					int x = settings.getPos().getX();
+					int y = settings.getPos().getY();
+					int z = settings.getPos().getZ();
+					
+					tooltip.add(new TranslationTextComponent("desc.immersivepetroleum.info.projector.center", x, y, z).mergeStyle(TextFormatting.DARK_GRAY));
+				}
+				
+				tooltip.add(rotation);
+				tooltip.add(flip);
+			}else{
+				ITextComponent text = new StringTextComponent("[")
+						.append(new TranslationTextComponent("desc.immersivepetroleum.info.projector.holdshift"))
+						.appendString("] ")
+						.append(new TranslationTextComponent("desc.immersivepetroleum.info.projector.holdshift.text"))
+						.mergeStyle(TextFormatting.DARK_AQUA);
+				tooltip.add(text);
+			}
+			
+			if(isPressing(GLFW.GLFW_KEY_LEFT_CONTROL) || isPressing(GLFW.GLFW_KEY_RIGHT_CONTROL)){
+				ITextComponent ctrl0 = new TranslationTextComponent("desc.immersivepetroleum.info.projector.control1")
+						.mergeStyle(TextFormatting.DARK_GRAY);
+				ITextComponent ctrl1 = new TranslationTextComponent("desc.immersivepetroleum.info.projector.control2", ClientProxy.keybind_preview_flip.func_238171_j_())
+						.mergeStyle(TextFormatting.DARK_GRAY);
+				ITextComponent ctrl2 = new TranslationTextComponent("desc.immersivepetroleum.info.projector.control3")
+						.mergeStyle(TextFormatting.DARK_GRAY);
+				
+				tooltip.add(ctrl0);
+				tooltip.add(ctrl1);
+				tooltip.add(ctrl2);
+			}else{
+				ITextComponent text = new StringTextComponent("[")
+						.append(new TranslationTextComponent("desc.immersivepetroleum.info.projector.holdctrl"))
+						.appendString("] ")
+						.append(new TranslationTextComponent("desc.immersivepetroleum.info.projector.holdctrl.text"))
+						.mergeStyle(TextFormatting.DARK_PURPLE);
+				tooltip.add(text);
+			}
+		}else{
+			tooltip.add(new TranslationTextComponent("desc.immersivepetroleum.info.projector.noMultiblock"));
+		}
+	}
+	
+	/** Find the key that is being pressed while minecraft is in focus */
+	@OnlyIn(Dist.CLIENT)
+	private boolean isPressing(int key){
+		long window=Minecraft.getInstance().getMainWindow().getHandle();
+		return GLFW.glfwGetKey(window, key)==GLFW.GLFW_PRESS;
 	}
 	
 	/** Name cache for {@link ProjectorItem#getActualMBName(IMultiblock)} */
@@ -696,7 +738,7 @@ public class ProjectorItem extends IPItemBase{
 						settings.sendPacketToServer(main ? Hand.MAIN_HAND : Hand.OFF_HAND);
 						
 						Direction facing = Direction.byHorizontalIndex(settings.getRotation().ordinal());
-						player.sendStatusMessage(new TranslationTextComponent("chat.immersivepetroleum.info.projector.rotated." + facing), true);
+						player.sendStatusMessage(new TranslationTextComponent("desc.immersivepetroleum.info.projector.rotated." + facing), true);
 						
 						event.setCanceled(true);
 					}
@@ -739,8 +781,13 @@ public class ProjectorItem extends IPItemBase{
 				settings.applyTo(target);
 				settings.sendPacketToServer(main ? Hand.MAIN_HAND : Hand.OFF_HAND);
 				
-				String yesno = settings.isMirrored() ? I18n.format("chat.immersivepetroleum.info.projector.flipped.yes") : I18n.format("chat.immersivepetroleum.info.projector.flipped.no");
-				player.sendStatusMessage(new TranslationTextComponent("chat.immersivepetroleum.info.projector.flipped", yesno), true);
+				ITextComponent flip;
+				if(settings.isMirrored()){
+					flip = new TranslationTextComponent("desc.immersivepetroleum.info.projector.flipped.true");
+				}else{
+					flip = new TranslationTextComponent("desc.immersivepetroleum.info.projector.flipped.false");
+				}
+				player.sendStatusMessage(flip, true);
 			}
 		}
 	}
