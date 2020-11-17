@@ -23,6 +23,7 @@ import net.minecraft.util.Rotation;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.Mutable;
+import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.template.PlacementSettings;
@@ -41,7 +42,7 @@ public class MultiblockProjection{
 	final PlacementSettings settings = new PlacementSettings();
 	final Int2ObjectMap<List<Template.BlockInfo>> layers = new Int2ObjectArrayMap<>();
 	final int blockcount;
-	Mutable offset;
+	final Mutable offset = new Mutable();
 	boolean isDirty = true;
 	World world;
 	public MultiblockProjection(World world, @Nonnull IMultiblock multiblock){
@@ -67,7 +68,7 @@ public class MultiblockProjection{
 	public MultiblockProjection setRotation(Rotation rotation){
 		if(this.settings.getRotation() != rotation){
 			this.settings.setRotation(rotation);
-			this.isDirty=true;
+			this.isDirty = true;
 		}
 		
 		return this;
@@ -86,43 +87,7 @@ public class MultiblockProjection{
 		Mirror m = mirror ? Mirror.FRONT_BACK : Mirror.NONE;
 		if(this.settings.getMirror() != m){
 			this.settings.setMirror(m);
-			this.isDirty=true;
-		}
-		
-		return this;
-	}
-	
-	/**
-	 * Toggles between {@link Mirror#NONE} and {@link Mirror#FRONT_BACK}
-	 */
-	public MultiblockProjection flip(){
-		return setFlip(this.settings.getMirror() == Mirror.NONE);
-	}
-	
-	/**
-	 * <pre>
-	 * dir > 0 = Clockwise rotation
-	 * dir < 0 = Counter-Clockwise rotation
-	 * </pre>
-	 */
-	public MultiblockProjection rotate(int dir){
-		if(dir != 0){
-			Rotation rotation = this.settings.getRotation();
-			if(dir < 0){
-				while(dir < 0){
-					rotation = rotation.add(Rotation.COUNTERCLOCKWISE_90);
-					dir++;
-				}
-			}else{
-				while(dir > 0){
-					rotation = rotation.add(Rotation.CLOCKWISE_90);
-					dir--;
-				}
-			}
-			
-			if(this.settings.getRotation()!=rotation){
-				this.setRotation(rotation);
-			}
+			this.isDirty = true;
 		}
 		
 		return this;
@@ -131,6 +96,7 @@ public class MultiblockProjection{
 	public void reset(){
 		this.settings.setRotation(Rotation.NONE);
 		this.settings.setMirror(Mirror.NONE);
+		this.offset.setPos(0, 0, 0);
 	}
 	
 	/** Total amount of blocks present in the multiblock */
@@ -212,92 +178,44 @@ public class MultiblockProjection{
 		return false;
 	}
 	
-	/**
-	 * <i><b>Experimental</b></i>
-	 * Multi-Layer based projection processing. (Do all at once)
-	 * 
-	 * @param predicate What to do per block
-	 * @return true if it was stopped pre-maturely, false if it went through everything
-	 */
-	public boolean processAllTest(BiPredicate<Integer, Info> predicate){
-		updateData();
-		
-		for(int layer = 0;layer < getLayerCount();layer++){
-			List<Template.BlockInfo> blocks = this.layers.get(layer);
-			for(Template.BlockInfo info:blocks){
-				BlockPos transformedPos = Template.transformedBlockPos(this.settings, info.pos).subtract(this.offset);
-				
-				if(predicate.test(layer, new Info(this.blockAccess, this.settings, info.pos, transformedPos))){
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-	
 	private void updateData(){
 		if(!this.isDirty) return;
-		this.isDirty=false;
+		this.isDirty = false;
 		
-		int mWidth = this.multiblock.getSize(this.world).getX();
-		int mDepth = this.multiblock.getSize(this.world).getZ();
+		boolean mirrored = this.settings.getMirror() == Mirror.FRONT_BACK;
+		Rotation rotation = this.settings.getRotation();
+		Vector3i size = this.multiblock.getSize(this.world);
 		
-		// Determine if the dimensions are even (true) or odd (false)
-		// Divide with float, Divide with int then subtract both and check for 0
-		boolean evenWidth = ((mWidth / 2F) - (mWidth / 2)) == 0F;
-		boolean evenDepth = ((mDepth / 2F) - (mDepth / 2)) == 0F;
-		
-		// Take even/odd-ness of multiblocks into consideration for rotation
-		int xa = evenWidth ? 1 : 0;
-		int za = evenDepth ? 1 : 0;
-		
-		if(this.settings.getMirror() == Mirror.FRONT_BACK){
-			this.offset = new Mutable(-mWidth / 2, 0, mDepth / 2);
-			this.settings.setCenterOffset(this.offset.toImmutable());
-			
-			switch(this.settings.getRotation()){
-				case NONE:{
-					this.offset.setAndOffset(this.offset, xa, 0, 0);
-					break;
-				}
-				case CLOCKWISE_90:{
-					this.offset.setAndOffset(this.offset, xa, 0, za);
-					break;
-				}
-				case CLOCKWISE_180:{
-					this.offset.setAndOffset(this.offset, 0, 0, za);
-					break;
-				}
-				default:
-					break;
+		// Align corners first
+		if(!mirrored){
+			switch(rotation){
+				case CLOCKWISE_90:		 this.offset.setPos(1 - size.getZ(), 0, 0);break;
+				case CLOCKWISE_180:		 this.offset.setPos(1 - size.getX(), 0, 1 - size.getZ());break;
+				case COUNTERCLOCKWISE_90:this.offset.setPos(0, 0, 1 - size.getX());break;
+				default:				 this.offset.setPos(0, 0, 0);break;
 			}
 		}else{
-			this.offset = new Mutable(mWidth / 2, 0, mDepth / 2);
-			this.settings.setCenterOffset(this.offset.toImmutable());
-			
-			switch(this.settings.getRotation()){
-				case CLOCKWISE_90:{
-					this.offset.setAndOffset(this.offset, xa, 0, 0);
-					break;
-				}
-				case CLOCKWISE_180:{
-					this.offset.setAndOffset(this.offset, xa, 0, za);
-					break;
-				}
-				case COUNTERCLOCKWISE_90:{
-					this.offset.setAndOffset(this.offset, 0, 0, za);
-					break;
-				}
-				default:
-					break;
+			switch(rotation){
+				case NONE:			this.offset.setPos(1 - size.getX(), 0, 0);break;
+				case CLOCKWISE_90:	this.offset.setPos(1 - size.getZ(), 0, 1 - size.getX());break;
+				case CLOCKWISE_180:	this.offset.setPos(0, 0, 1 - size.getZ());break;
+				default:			this.offset.setPos(0, 0, 0);break;
 			}
 		}
+		
+		// Center the whole thing
+		int x = ((rotation.ordinal() % 2 == 0) ? size.getX() : size.getZ()) / 2;
+		int z = ((rotation.ordinal() % 2 == 0) ? size.getZ() : size.getX()) / 2;
+		this.offset.setAndOffset(this.offset, x, 0, z);
 	}
 	
+	// STATIC METHODS
 	
 	public static IMultiblockBlockReader getBlockAccessFor(IMultiblock multiblock){
 		return new MultiblockBlockReaderImpl(multiblock);
 	}
+	
+	// STATIC CLASSES
 	
 	public static final class Info{
 		/** Template Position */
@@ -323,7 +241,6 @@ public class MultiblockProjection{
 			this.multiblock = blockAccess.getMultiblock();
 		}
 	}
-	
 	
 	public static interface IMultiblockBlockReader extends IBlockReader{
 		IMultiblock getMultiblock();

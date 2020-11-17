@@ -18,10 +18,6 @@ import com.mojang.blaze3d.vertex.IVertexBuilder;
 
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler.IMultiblock;
 import blusunrize.immersiveengineering.client.ClientUtils;
-import blusunrize.immersiveengineering.common.blocks.IEBlocks;
-import blusunrize.immersiveengineering.common.blocks.metal.ConveyorBeltTileEntity;
-import blusunrize.immersiveengineering.common.blocks.metal.conveyors.BasicConveyor;
-import blusunrize.immersiveengineering.common.blocks.multiblocks.IEMultiblocks;
 import blusunrize.immersiveengineering.common.util.ItemNBTHelper;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.event.ProjectorEvent;
@@ -90,7 +86,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = ImmersivePetroleum.MODID)
 public class ProjectorItem extends IPItemBase{
 	public ProjectorItem(String name){
 		super(name, new Item.Properties().maxStackSize(1));
@@ -245,7 +240,7 @@ public class ProjectorItem extends IPItemBase{
 			}
 			
 			Vector3i size = settings.getMultiblock().getSize(world);
-			hit.setPos(alignHit(hit, playerIn, settings.getRotation(), size, settings.isMirrored()));
+			alignHit(hit, playerIn, size, settings.getRotation(), settings.isMirrored());
 			
 			if(playerIn.isSneaking() && playerIn.isCreative()){
 				if(!world.isRemote){
@@ -289,53 +284,23 @@ public class ProjectorItem extends IPItemBase{
 		return ActionResultType.PASS;
 	}
 	
+	// STATIC METHODS
+	
 	public static Settings getSettings(@Nullable ItemStack stack){
 		return new Settings(stack);
 	}
 	
-	private static BlockPos alignHit(BlockPos hit, PlayerEntity playerIn, Rotation rotation, Vector3i multiblockSize, boolean flip){
-		int xd = (rotation.ordinal() % 2 == 0) ? multiblockSize.getX() : multiblockSize.getZ();
-		int zd = (rotation.ordinal() % 2 == 0) ? multiblockSize.getZ() : multiblockSize.getX();
+	private static void alignHit(Mutable hit, PlayerEntity playerIn, Vector3i size, Rotation rotation, boolean mirror){
+		int x = ((rotation.ordinal() % 2 == 0) ? size.getX() : size.getZ()) / 2;
+		int z = ((rotation.ordinal() % 2 == 0) ? size.getZ() : size.getX()) / 2;
+		Direction facing = playerIn.getHorizontalFacing();
 		
-		Direction look = playerIn.getHorizontalFacing();
-		
-		if(multiblockSize.getZ() > 1 && (look == Direction.NORTH || look == Direction.SOUTH)){
-			int a = zd / 2;
-			if(look == Direction.NORTH){
-				a += 1;
-			}
-			hit = hit.add(0, 0, a);
-		}else if(multiblockSize.getX() > 1 && (look == Direction.EAST || look == Direction.WEST)){
-			int a = xd / 2;
-			if(look == Direction.WEST){
-				a += 1;
-			}
-			hit = hit.add(a, 0, 0);
-		}
-		
-		if(multiblockSize.getZ() > 1 && look == Direction.NORTH){
-			hit = hit.add(0, 0, -zd);
-		}else if(multiblockSize.getX() > 1 && look == Direction.WEST){
-			hit = hit.add(-xd, 0, 0);
-		}
-		
-		return hit;
-	}
-	
-	// TODO Dont think this is nessesary anymore
-	@SubscribeEvent
-	public static void handleConveyorPlace(ProjectorEvent.PlaceBlockPost event){
-		ResourceLocation rl = event.getMultiblock().getUniqueName();
-		if(rl.equals(IEMultiblocks.AUTO_WORKBENCH.getUniqueName()) ||
-				rl.equals(IEMultiblocks.BOTTLING_MACHINE.getUniqueName()) ||
-				rl.equals(IEMultiblocks.ASSEMBLER.getUniqueName()) ||
-				rl.equals(IEMultiblocks.METAL_PRESS.getUniqueName())){
-			if(event.getState().getBlock() == IEBlocks.MetalDevices.CONVEYORS.get(BasicConveyor.NAME)){
-				TileEntity te = event.getWorld().getTileEntity(event.getWorldPos());
-				if(te instanceof ConveyorBeltTileEntity){
-					
-				}
-			}
+		switch(facing){
+			case NORTH:	hit.setAndOffset(hit, 0, 0, -z);break;
+			case EAST:	hit.setAndOffset(hit, x, 0, 0);break;
+			case SOUTH:	hit.setAndOffset(hit, 0, 0, z);break;
+			case WEST:	hit.setAndOffset(hit, -x, 0, 0);break;
+			default:break;
 		}
 	}
 	
@@ -352,12 +317,12 @@ public class ProjectorItem extends IPItemBase{
 				MatrixStack matrix = event.getMatrixStack();
 				matrix.push();
 				{
-					ItemStack secondItem = mc.player.getHeldItemOffhand();
-					boolean off = !secondItem.isEmpty() && secondItem.getItem() == Items.projector && ItemNBTHelper.hasKey(secondItem, "settings");
-					
 					// Anti-Jiggle when moving
 					Vector3d renderView = ClientUtils.mc().gameRenderer.getActiveRenderInfo().getProjectedView();
 					matrix.translate(-renderView.x, -renderView.y, -renderView.z);
+					
+					ItemStack secondItem = mc.player.getHeldItemOffhand();
+					boolean off = !secondItem.isEmpty() && secondItem.getItem() == Items.projector && ItemNBTHelper.hasKey(secondItem, "settings");
 					
 					for(int i = 0;i <= 10;i++){
 						ItemStack stack = (i == 10 ? secondItem : mc.player.inventory.getStackInSlot(i));
@@ -365,7 +330,8 @@ public class ProjectorItem extends IPItemBase{
 							Settings settings = getSettings(stack);
 							matrix.push();
 							{
-								renderSchematic(matrix, settings, mc.player, mc.player.world, event.getPartialTicks(), i == mc.player.inventory.currentItem || (i == 10 && off));
+								boolean renderMoving = i == mc.player.inventory.currentItem || (i == 10 && off);
+								renderSchematic(matrix, settings, mc.player, mc.player.world, event.getPartialTicks(), renderMoving);
 							}
 							matrix.pop();
 						}
@@ -376,7 +342,7 @@ public class ProjectorItem extends IPItemBase{
 		}
 		
 		static final Mutable FULL_MAX = new Mutable(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
-		public static void renderSchematic(MatrixStack matrix, Settings settings, PlayerEntity player, World world, float partialTicks, boolean shouldRenderMoving){
+		public static void renderSchematic(MatrixStack matrix, Settings settings, PlayerEntity player, World world, float partialTicks, boolean renderMoving){
 			if(settings.getMultiblock() == null) return;
 			
 			Vector3i size = settings.getMultiblock().getSize(world);
@@ -386,7 +352,7 @@ public class ProjectorItem extends IPItemBase{
 				hit.setPos(settings.getPos());
 				isPlaced.setTrue();
 				
-			}else if(shouldRenderMoving && ClientUtils.mc().objectMouseOver != null && ClientUtils.mc().objectMouseOver.getType() == Type.BLOCK){
+			}else if(renderMoving && ClientUtils.mc().objectMouseOver != null && ClientUtils.mc().objectMouseOver.getType() == Type.BLOCK){
 				BlockRayTraceResult blockRTResult = (BlockRayTraceResult) ClientUtils.mc().objectMouseOver;
 				
 				BlockPos pos = (BlockPos) blockRTResult.getPos();
@@ -398,11 +364,12 @@ public class ProjectorItem extends IPItemBase{
 					hit.setAndOffset(pos, 0, 1, 0);
 				}
 				
-				hit.setPos(alignHit(hit, ClientUtils.mc().player, settings.getRotation(), size, settings.isMirrored()));
+				alignHit(hit, player, size, settings.getRotation(), settings.isMirrored());
 			}
 			
 			if(!hit.equals(FULL_MAX)){
-				if(settings.getMultiblock().getUniqueName().getPath().contains("excavator_demo") || settings.getMultiblock().getUniqueName().getPath().contains("bucket_wheel")){
+				ResourceLocation name = settings.getMultiblock().getUniqueName();
+				if(name.getPath().contains("excavator_demo") || name.getPath().contains("bucket_wheel")){
 					hit.setAndOffset(hit, 0, -2, 0);
 				}
 				
@@ -475,8 +442,7 @@ public class ProjectorItem extends IPItemBase{
 							
 							matrix.push();
 							{
-								//renderPhantom(matrix, settings.getMultiblock(), world, info, rInfo.worldPos, flicker, alpha, partialTicks, settings.isMirrored(), rInfo.settings.getRotation());
-								renderPhantom(matrix, projection.getMultiblockBlockAccess(), world, rInfo.templatePos, rInfo.worldPos, flicker, alpha, partialTicks, settings.isMirrored(), rInfo.settings.getRotation());
+								renderPhantom(matrix, projection.getMultiblockBlockAccess(), world, rInfo.templatePos, rInfo.worldPos, rInfo.settings.getRotation(), settings.isMirrored(), flicker, alpha, partialTicks);
 							}
 							matrix.pop();
 							break;
@@ -550,7 +516,7 @@ public class ProjectorItem extends IPItemBase{
 			}
 		}
 		
-		private static void renderPhantom(MatrixStack matrix, IMultiblockBlockReader blockAccess, World world, BlockPos templatePos, BlockPos worldPos, float flicker, float alpha, float partialTicks, boolean flipXZ, Rotation rotation){
+		private static void renderPhantom(MatrixStack matrix, IMultiblockBlockReader blockAccess, World world, BlockPos templatePos, BlockPos worldPos, Rotation rotation, boolean mirror, float flicker, float alpha, float partialTicks){
 			BlockRendererDispatcher dispatcher = ClientUtils.mc().getBlockRendererDispatcher();
 			BlockModelRenderer blockRenderer = dispatcher.getBlockModelRenderer();
 			BlockColors blockColors = ClientUtils.mc().getBlockColors();
@@ -683,16 +649,6 @@ public class ProjectorItem extends IPItemBase{
 			builder.pos(mat, -s, -s, -s).color(r, g, b, alpha).endVertex();
 			
 			buffer.finish();
-		}
-		
-		// TODO Dont think this is nessesary anymore
-		@SubscribeEvent
-		public static void handleConveyorsAndPipes(ProjectorEvent.RenderBlock event){
-			if(event.getState().getBlock() == IEBlocks.MetalDevices.fluidPipe){
-				event.setState(IPContent.Blocks.dummyPipe.getDefaultState());
-			}else if(event.getState().getBlock() == IEBlocks.MetalDevices.CONVEYORS.get(BasicConveyor.NAME)){
-//				event.setState(IPContent.Blocks.dummyConveyor.getDefaultState());
-			}
 		}
 	}
 	
