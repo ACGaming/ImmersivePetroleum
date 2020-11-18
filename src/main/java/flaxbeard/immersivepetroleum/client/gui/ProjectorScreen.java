@@ -199,7 +199,7 @@ public class ProjectorScreen extends Screen{
 			drawCenteredString(matrix, this.font, new StringTextComponent(dir.toString().toUpperCase().substring(0, 1)), x + 9, y + 5, -1);
 			
 			if(mouseX > x && mouseX < x + 18 && mouseY > y && mouseY < y + 18){
-				ITextComponent text = new TranslationTextComponent("chat.immersivepetroleum.info.projector.rotated." + dir);
+				ITextComponent text = new TranslationTextComponent("desc.immersivepetroleum.info.projector.rotated." + dir);
 				renderTooltip(matrix, text, mouseX, mouseY);
 			}
 		}

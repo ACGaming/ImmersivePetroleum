@@ -198,7 +198,7 @@ public class Settings{
 		
 		final String translation;
 		private Mode(){
-			this.translation = "chat.immersivepetroleum.info.projector.mode_" + ordinal();
+			this.translation = "desc.immersivepetroleum.info.projector.mode_" + ordinal();
 		}
 		
 		public ITextComponent getTranslated(){

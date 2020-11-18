@@ -339,8 +339,8 @@ public class ProjectorItem extends IPItemBase{
 		
 		switch(facing){
 			case NORTH:	hit.setAndOffset(hit, 0, 0, -z);break;
-			case EAST:	hit.setAndOffset(hit, x, 0, 0);break;
 			case SOUTH:	hit.setAndOffset(hit, 0, 0, z);break;
+			case EAST:	hit.setAndOffset(hit, x, 0, 0);break;
 			case WEST:	hit.setAndOffset(hit, -x, 0, 0);break;
 			default:break;
 		}
