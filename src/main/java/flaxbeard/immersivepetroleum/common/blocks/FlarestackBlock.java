@@ -32,7 +32,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.ToolType;
-import net.minecraftforge.common.util.LazyOptional;
 
 public class FlarestackBlock extends IPBlockBase{
 	private static final Material material = new Material(MaterialColor.IRON, false, false, true, true, false, false, PushReaction.BLOCK);
@@ -102,24 +101,27 @@ public class FlarestackBlock extends IPBlockBase{
 		}
 	}
 	
-	static final LazyOptional<VoxelShape> SHAPE_SLAVE = LazyOptional.of(()->{
-		VoxelShape s0 = VoxelShapes.create(0.125, 0.0001, 0.125, 0.875, 0.75, 0.875);
-		VoxelShape s1 = VoxelShapes.create(0.0625, 0.0001, 0.0625, 0.9375, 0.375, 0.9375);
-		return VoxelShapes.combineAndSimplify(s0, s1, IBooleanFunction.OR);
-	});
-	
-	static final LazyOptional<VoxelShape> SHAPE_MASTER = LazyOptional.of(()->{
-		VoxelShape s0 = VoxelShapes.create(0.125, 0.0001, 0.125, 0.875, 0.75, 0.875);
-		VoxelShape s1 = VoxelShapes.create(0.0625, 0.5, 0.0625, 0.9375, 0.9999, 0.9375);
-		return VoxelShapes.combineAndSimplify(s0, s1, IBooleanFunction.OR);
-	});
+	static VoxelShape SHAPE_SLAVE;
+	static VoxelShape SHAPE_MASTER;
 	
 	@Override
 	public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context){
 		if(state.get(SLAVE)){
-			return SHAPE_SLAVE.orElse(VoxelShapes.fullCube());
+			if(SHAPE_SLAVE == null){
+				VoxelShape s0 = VoxelShapes.create(0.125, 0.0001, 0.125, 0.875, 0.75, 0.875);
+				VoxelShape s1 = VoxelShapes.create(0.0625, 0.0001, 0.0625, 0.9375, 0.375, 0.9375);
+				SHAPE_SLAVE = VoxelShapes.combineAndSimplify(s0, s1, IBooleanFunction.OR);
+			}
+			
+			return SHAPE_SLAVE;
 		}else{
-			return SHAPE_MASTER.orElse(VoxelShapes.fullCube());
+			if(SHAPE_MASTER == null){
+				VoxelShape s0 = VoxelShapes.create(0.125, 0.0001, 0.125, 0.875, 0.75, 0.875);
+				VoxelShape s1 = VoxelShapes.create(0.0625, 0.5, 0.0625, 0.9375, 0.9999, 0.9375);
+				SHAPE_MASTER = VoxelShapes.combineAndSimplify(s0, s1, IBooleanFunction.OR);
+			}
+			
+			return SHAPE_MASTER;
 		}
 	}
 	
