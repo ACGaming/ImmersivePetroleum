@@ -128,29 +128,29 @@ public class FlarestackTileEntity extends TileEntity implements ITickableTileEnt
 	@Override
 	public void tick(){
 		if(this.world.isRemote){
-			if(this.world.getGameTime() % 3 == 0){
+			if(this.world.getGameTime() % 4 == 0){
 				if(this.isActive){
+					Random lastRand = new Random((int) Math.floor(this.world.getGameTime() / 20F));
+					Random thisRand = new Random((int) Math.ceil(this.world.getGameTime() / 20F));
+					
+					float lastDirection = lastRand.nextFloat() * 360;
+					float thisDirection = thisRand.nextFloat() * 360;
+					float interpDirection = (thisDirection - lastDirection) * ((this.world.getGameTime() % 20) / 20F) + lastDirection;
+					float xSpeed = (float) Math.sin(interpDirection) * .1F;
+					float zSpeed = (float) Math.cos(interpDirection) * .1F;
+					
 					for(int i = 0;i < 10;i++){
-						Random lastRand = new Random((int) Math.floor(this.world.getGameTime() / 20F));
-						Random thisRand = new Random((int) Math.ceil(this.world.getGameTime() / 20F));
-						
-						float lastDirection = lastRand.nextFloat() * 360;
-						float thisDirection = thisRand.nextFloat() * 360;
-						float interpDirection = (thisDirection - lastDirection) * ((this.world.getGameTime() % 20) / 20F) + lastDirection;
-						
 						float xPos = (this.pos.getX() + 0.50F) + (this.world.rand.nextFloat() - 0.5F) * .4375F;
 						float zPos = (this.pos.getZ() + 0.50F) + (this.world.rand.nextFloat() - 0.5F) * .4375F;
-						float yPos = (this.pos.getY() + 1.75F) + (this.world.rand.nextFloat() - 0.5F) * .4375F;
-						float xSpeed = (float) Math.sin(interpDirection) * .1F;
-						float zSpeed = (float) Math.cos(interpDirection) * .1F;
+						float yPos = (this.pos.getY() + 1.875F) + (this.world.rand.nextFloat() - 0.5F) * 1.0F;
 						
 						this.world.addParticle(ParticleTypes.FLAME, xPos, yPos, zPos, xSpeed, .2f, zSpeed);
-						if(Math.random()<=0.05){
+						if(Math.random() <= 0.1){
 							this.world.addParticle(ParticleTypes.LARGE_SMOKE, xPos, yPos, zPos, xSpeed, .15f, zSpeed);
 						}
 					}
 				}else{
-					for(int i = 0;i < 3;i++){
+//					for(int i = 0;i < 1;i++){
 						float xPos = this.pos.getX() + 0.50F + (this.world.rand.nextFloat() - 0.5F) * .4375F;
 						float zPos = this.pos.getZ() + 0.50F + (this.world.rand.nextFloat() - 0.5F) * .4375F;
 						float yPos = this.pos.getY() + 1.6F;
@@ -158,7 +158,7 @@ public class FlarestackTileEntity extends TileEntity implements ITickableTileEnt
 						double ya = (Math.random() - .5) * .00625;
 						
 						this.world.addParticle(ParticleTypes.FLAME, xPos, yPos, zPos, xa, .025f, ya);
-					}
+//					}
 				}
 			}
 		}else{
