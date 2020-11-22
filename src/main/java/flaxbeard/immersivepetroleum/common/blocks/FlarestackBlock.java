@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
+import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.FlarestackTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -12,6 +13,8 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.block.material.PushReaction;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
@@ -21,6 +24,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.StateContainer.Builder;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.IBooleanFunction;
@@ -90,6 +94,25 @@ public class FlarestackBlock extends IPBlockBase{
 		if(!worldIn.isRemote){
 			worldIn.setBlockState(pos.offset(Direction.UP), state.with(SLAVE, true));
 		}
+	}
+	
+	@Override
+	public void onEntityWalk(World worldIn, BlockPos pos, Entity entityIn){
+		BlockState state = worldIn.getBlockState(pos);
+		if(state.getBlock() == IPContent.Blocks.flarestack && state.get(SLAVE)){
+			if(!entityIn.isImmuneToFire() && entityIn instanceof LivingEntity && !EnchantmentHelper.hasFrostWalker((LivingEntity) entityIn)){
+				TileEntity te = worldIn.getTileEntity(pos.offset(Direction.DOWN));
+				if(te != null && te instanceof FlarestackTileEntity){
+					if(((FlarestackTileEntity) te).isActive()){
+						entityIn.setFire(4);
+					}else{
+						entityIn.attackEntityFrom(DamageSource.HOT_FLOOR, 1.0F);
+					}
+				}
+			}
+		}
+		
+		super.onEntityWalk(worldIn, pos, entityIn);
 	}
 	
 	@Override

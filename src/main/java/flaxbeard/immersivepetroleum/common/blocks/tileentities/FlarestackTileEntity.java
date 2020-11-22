@@ -32,6 +32,10 @@ public class FlarestackTileEntity extends TileEntity implements ITickableTileEnt
 		super(tileEntityTypeIn);
 	}
 	
+	public boolean isActive(){
+		return this.isActive;
+	}
+	
 	@Override
 	public void read(BlockState state, CompoundNBT nbt){
 		super.read(state, nbt);
