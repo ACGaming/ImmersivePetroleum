@@ -117,16 +117,16 @@ public class FlarestackBlock extends IPBlockBase{
 	public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context){
 		if(state.get(SLAVE)){
 			if(SHAPE_SLAVE == null){
-				VoxelShape s0 = VoxelShapes.create(0.125, 0.0001, 0.125, 0.875, 0.75, 0.875);
-				VoxelShape s1 = VoxelShapes.create(0.0625, 0.0001, 0.0625, 0.9375, 0.375, 0.9375);
+				VoxelShape s0 = VoxelShapes.create(0.125, 0.0, 0.125, 0.875, 0.75, 0.875);
+				VoxelShape s1 = VoxelShapes.create(0.0625, 0.0, 0.0625, 0.9375, 0.375, 0.9375);
 				SHAPE_SLAVE = VoxelShapes.combineAndSimplify(s0, s1, IBooleanFunction.OR);
 			}
 			
 			return SHAPE_SLAVE;
 		}else{
 			if(SHAPE_MASTER == null){
-				VoxelShape s0 = VoxelShapes.create(0.125, 0.0001, 0.125, 0.875, 0.75, 0.875);
-				VoxelShape s1 = VoxelShapes.create(0.0625, 0.5, 0.0625, 0.9375, 0.9999, 0.9375);
+				VoxelShape s0 = VoxelShapes.create(0.125, 0.0, 0.125, 0.875, 0.75, 0.875);
+				VoxelShape s1 = VoxelShapes.create(0.0625, 0.5, 0.0625, 0.9375, 1.0, 0.9375);
 				SHAPE_MASTER = VoxelShapes.combineAndSimplify(s0, s1, IBooleanFunction.OR);
 			}
 			
