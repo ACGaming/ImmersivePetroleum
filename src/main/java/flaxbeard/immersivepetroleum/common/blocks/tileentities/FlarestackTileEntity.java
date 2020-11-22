@@ -23,7 +23,7 @@ public class FlarestackTileEntity extends TileEntity implements ITickableTileEnt
 	public static TileEntityType<FlarestackTileEntity> TYPE;
 	
 	protected boolean isActive;
-	protected FluidTank tank = new FluidTank(8000, fluid -> (fluid != null && LubricantHandler.isValidLube(fluid.getFluid())));
+	protected FluidTank tank = new FluidTank(1000, fluid -> (fluid != null && LubricantHandler.isValidLube(fluid.getFluid())));
 	public FlarestackTileEntity(){
 		this(TYPE);
 	}
@@ -164,7 +164,7 @@ public class FlarestackTileEntity extends TileEntity implements ITickableTileEnt
 		}else{
 			boolean lastActive = this.isActive;
 			
-			if(!this.tank.getFluid().isEmpty() && this.tank.getFluidAmount() > 0){
+			if(this.tank.getFluidAmount() > 0){
 				if(this.tank.drain(75, FluidAction.EXECUTE).getAmount() > 0 && !this.isActive){
 					this.isActive = true;
 				}
