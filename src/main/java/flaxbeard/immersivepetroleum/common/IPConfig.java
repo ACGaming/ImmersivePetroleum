@@ -89,6 +89,8 @@ public class IPConfig{
 	public static class Refining{
 		public final ConfigValue<Double> distillationTower_energyModifier;
 		public final ConfigValue<Double> distillationTower_timeModifier;
+		public final ConfigValue<Double> cokerUnit_energyModifier;
+		public final ConfigValue<Double> cokerUnit_timeModifier;
 		Refining(ForgeConfigSpec.Builder builder){
 			builder.push("Refining");
 			
@@ -99,6 +101,14 @@ public class IPConfig{
 			distillationTower_timeModifier=builder
 					.comment("A modifier to apply to the time of every Distillation recipe. Can't be lower than 1, default=1")
 					.define("distillationTower_timeModifier", Double.valueOf(1.0));
+			
+			cokerUnit_energyModifier = builder
+					.comment("A modifier to apply to the energy costs of every Coker Tower recipe, default=1")
+					.define("cokerUnit_energyModifier", Double.valueOf(1.0));
+			
+			cokerUnit_timeModifier = builder
+					.comment("A modifier to apply to the time of every Coker recipe. Can't be lower than 1, default=1")
+					.define("cokerUnit_timeModifier", Double.valueOf(1.0));
 			
 			builder.pop();
 		}

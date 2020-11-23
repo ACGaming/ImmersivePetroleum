@@ -27,11 +27,13 @@ import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler.LubricantEffe
 import flaxbeard.immersivepetroleum.common.blocks.AsphaltBlock;
 import flaxbeard.immersivepetroleum.common.blocks.AutoLubricatorBlock;
 import flaxbeard.immersivepetroleum.common.blocks.BlockDummy;
+import flaxbeard.immersivepetroleum.common.blocks.CokerUnitBlock;
 import flaxbeard.immersivepetroleum.common.blocks.DistillationTowerBlock;
 import flaxbeard.immersivepetroleum.common.blocks.GasGeneratorBlock;
 import flaxbeard.immersivepetroleum.common.blocks.IPBlockBase;
 import flaxbeard.immersivepetroleum.common.blocks.PumpjackBlock;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.AutoLubricatorTileEntity;
+import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.DistillationTowerTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.GasGeneratorTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.PumpjackTileEntity;
@@ -73,6 +75,7 @@ public class IPContent{
 	public static class Multiblock{
 		public static Block distillationtower;
 		public static Block pumpjack;
+		public static Block cokerunit;
 	}
 	
 	public static class Fluids{
@@ -127,6 +130,7 @@ public class IPContent{
 		
 		Multiblock.distillationtower=new DistillationTowerBlock();
 		Multiblock.pumpjack=new PumpjackBlock();
+		Multiblock.cokerunit = new CokerUnitBlock();
 		
 		Blocks.asphalt=new AsphaltBlock();
 		Blocks.gas_generator=new GasGeneratorBlock();
@@ -183,8 +187,9 @@ public class IPContent{
 	public static void registerTileEntities(RegistryEvent.Register<TileEntityType<?>> event){
 		registerTile(event, DistillationTowerTileEntity.class, Multiblock.distillationtower);
 		registerTile(event, PumpjackTileEntity.class, Multiblock.pumpjack);
-		registerTile(event, AutoLubricatorTileEntity.class, Blocks.auto_lubricator);
+		registerTile(event, CokerUnitTileEntity.class, Multiblock.cokerunit);
 		
+		registerTile(event, AutoLubricatorTileEntity.class, Blocks.auto_lubricator);
 		registerTile(event, GasGeneratorTileEntity.class, Blocks.gas_generator);
 	}
 	
