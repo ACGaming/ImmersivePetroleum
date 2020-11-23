@@ -1,5 +1,8 @@
 package flaxbeard.immersivepetroleum.api.crafting;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import blusunrize.immersiveengineering.api.crafting.FluidTagInput;
 import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
 import blusunrize.immersiveengineering.api.crafting.MultiblockRecipe;
@@ -14,6 +17,8 @@ import net.minecraft.util.ResourceLocation;
 
 public class CokerUnitRecipe extends MultiblockRecipe{
 	public static final IRecipeType<CokerUnitRecipe> TYPE = IRecipeType.register(ImmersivePetroleum.MODID + ":coking");
+	
+	public static Map<ResourceLocation, CokerUnitRecipe> recipes = new HashMap<>();
 	
 	protected final FluidTagInput inputFluid;
 	protected final ItemStack inputItem;

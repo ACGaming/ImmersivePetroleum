@@ -10,9 +10,11 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 
 public class CokerUnitMultiblock extends IETemplateMultiblock{
+	public static final CokerUnitMultiblock INSTANCE = new CokerUnitMultiblock();
+	
 	public CokerUnitMultiblock(){
 		super(new ResourceLocation(ImmersivePetroleum.MODID, "multiblocks/cokerunit"),
-				new BlockPos(4, 0, 2), new BlockPos(4, 1, 0),
+				new BlockPos(4, 0, 2), new BlockPos(4, 1, 4),
 				() -> IPContent.Multiblock.cokerunit.getDefaultState());
 	}
 	
