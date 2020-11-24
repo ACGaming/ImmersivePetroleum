@@ -47,8 +47,10 @@ public class IPItemModels extends LoadedModelProvider{
 		genericItem(IPContent.BoatUpgrades.rudders);
 		genericItem(IPContent.BoatUpgrades.tank);
 		
-		pumpjackItem();
 		distillationtowerItem();
+		pumpjackItem();
+		cokerunitItem();
+		
 		generatorItem();
 		autolubeItem();
 		
@@ -57,6 +59,37 @@ public class IPItemModels extends LoadedModelProvider{
 		
 		for(IPFluid f:IPFluid.FLUIDS)
 			createBucket(f);
+	}
+	
+	private void cokerunitItem(){
+		LoadedModelBuilder model=obj(IPContent.Multiblock.cokerunit, "multiblock/obj/cokerunit.obj")
+				.texture("texture", modLoc("multiblock/cokerunit"));
+		
+		model.transformationMap()
+		.setTransformations(Perspective.FIRSTPERSON_LEFT,
+				createMatrix(new Vector3d(0, 0, 0), new Vector3d(0, 225, 0), 0.03125))
+		
+		.setTransformations(Perspective.FIRSTPERSON_RIGHT,
+				createMatrix(new Vector3d(0, 0, 0), new Vector3d(0, 45, 0), 0.03125))
+		
+		.setTransformations(Perspective.THIRDPERSON_LEFT,
+				createMatrix(new Vector3d(0, 2.5, 0), new Vector3d(75, 225, 0), 0.03125))
+		
+		.setTransformations(Perspective.THIRDPERSON_RIGHT,
+				createMatrix(new Vector3d(0, 2.5, 0), new Vector3d(75, 45, 0), 0.03125))
+		
+		.setTransformations(Perspective.HEAD,
+				createMatrix(new Vector3d(0, 12, 0), null, 0.125))
+		
+		.setTransformations(Perspective.GUI,
+				createMatrix(new Vector3d(0, 0, 0), new Vector3d(30, 225, 0), 0.0625))
+		
+		.setTransformations(Perspective.GROUND,
+				createMatrix(new Vector3d(0, -8, 0), null, 0.03125))
+		
+		.setTransformations(Perspective.FIXED,
+				createMatrix(new Vector3d(0, -8, 0), null, 0.0625))
+		;
 	}
 	
 	private void generatorItem(){
