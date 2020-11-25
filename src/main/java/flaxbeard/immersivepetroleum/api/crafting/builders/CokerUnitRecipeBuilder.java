@@ -38,7 +38,7 @@ public class CokerUnitRecipeBuilder extends IEFinishedRecipe<CokerUnitRecipeBuil
 		return super.setTime(time);
 	}
 	
-	/** Defaults to 3072 when loading the recipe in-game (including reload) */
+	/** Defaults to 2048 when loading the recipe in-game (including reload) */
 	@Override
 	public CokerUnitRecipeBuilder setEnergy(int energy){
 		return super.setEnergy(energy);
