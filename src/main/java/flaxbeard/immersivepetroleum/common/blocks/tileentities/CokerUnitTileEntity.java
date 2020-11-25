@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.ImmutableSet;
@@ -66,6 +68,12 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	/** Output Fluid Tank<br> */
 	public static final int TANK_OUTPUT = 1;
 	
+	/** Coker Chamber A<br> */
+	public static final int CHAMBER_A = 0;
+	
+	/** Coker Chamber B<br> */
+	public static final int CHAMBER_B = 1;
+	
 	/** Template-Location of the Item Input Port for Chaining. (0 1 2)<br> */
 	public static final BlockPos Chaining_IN = new BlockPos(0, 1, 2);
 	
@@ -91,7 +99,8 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	public static final Set<BlockPos> Redstone_IN = ImmutableSet.of(new BlockPos(6, 1, 4));
 	
 	public final NonNullList<ItemStack> inventory = NonNullList.withSize(6, ItemStack.EMPTY);
-	public final FluidTank[] tanks = new FluidTank[]{new FluidTank(12000), new FluidTank(12000)};
+	public final FluidTank[] bufferTanks = {new FluidTank(16000), new FluidTank(16000)};
+	public final CokingChamber[] chambers = {new CokingChamber(64, 8000), new CokingChamber(64, 8000)};
 	public CokerUnitTileEntity(){
 		super(CokerUnitMultiblock.INSTANCE, 16000, true, null);
 	}
@@ -105,9 +114,11 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	public void readCustomNBT(CompoundNBT nbt, boolean descPacket){
 		super.readCustomNBT(nbt, descPacket);
 		
-		for(int i = 0;i < this.tanks.length;i++){
-			this.tanks[i].readFromNBT(nbt.getCompound("tank" + i));
-		}
+		this.bufferTanks[TANK_INPUT].readFromNBT(nbt.getCompound("tank0"));
+		this.bufferTanks[TANK_OUTPUT].readFromNBT(nbt.getCompound("tank1"));
+		
+		this.chambers[CHAMBER_A].readFromNBT(nbt.getCompound("chamber0"));
+		this.chambers[CHAMBER_B].readFromNBT(nbt.getCompound("chamber1"));
 		
 		if(!descPacket){
 			readInventory(nbt.getCompound("inventory"));
@@ -118,9 +129,11 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	public void writeCustomNBT(CompoundNBT nbt, boolean descPacket){
 		super.writeCustomNBT(nbt, descPacket);
 		
-		for(int i = 0;i < this.tanks.length;i++){
-			nbt.put("tank" + i, this.tanks[i].writeToNBT(new CompoundNBT()));
-		}
+		nbt.put("tank0", this.bufferTanks[TANK_INPUT].writeToNBT(new CompoundNBT()));
+		nbt.put("tank1", this.bufferTanks[TANK_OUTPUT].writeToNBT(new CompoundNBT()));
+		
+		nbt.put("chamber0", this.chambers[CHAMBER_A].writeToNBT(new CompoundNBT()));
+		nbt.put("chamber1", this.chambers[CHAMBER_B].writeToNBT(new CompoundNBT()));
 		
 		if(!descPacket){
 			nbt.put("inventory", writeInventory(this.inventory));
@@ -150,21 +163,21 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		if(this.posInMultiblock.equals(Fluid_IN)){
 			if(side == null || (getIsMirrored() ? (side == getFacing().rotateYCCW()) : (side == getFacing()))){
 				CokerUnitTileEntity master = master();
+				// TODO
 				
-				if(master != null && master.tanks[TANK_INPUT].getFluidAmount() < master.tanks[TANK_INPUT].getCapacity()){
-					FluidStack copy0 = Utils.copyFluidStackWithAmount(resource, 1000, false);
-					FluidStack copy1 = Utils.copyFluidStackWithAmount(master.tanks[TANK_INPUT].getFluid(), 1000, false);
-					
-					if(master.tanks[TANK_INPUT].getFluid() == FluidStack.EMPTY){
-						return CokerUnitRecipe.hasRecipeWithInput(copy0);
-					}else{
-						// TODO
+//				if(master != null && master.bufferTanks[TANK_INPUT].getFluidAmount() < master.bufferTanks[TANK_INPUT].getCapacity()){
+//					FluidStack copy0 = Utils.copyFluidStackWithAmount(resource, 1000, false);
+//					FluidStack copy1 = Utils.copyFluidStackWithAmount(master.bufferTanks[TANK_INPUT].getFluid(), 1000, false);
+//					
+//					if(master.bufferTanks[TANK_INPUT].getFluid() == FluidStack.EMPTY){
+//						return CokerUnitRecipe.hasRecipeWithInput(copy0);
+//					}else{
 //						FluidStack existing = master.tanks[TANK_INPUT].getFluid();
-						boolean r0 = CokerUnitRecipe.hasRecipeWithInput(copy0);
-						boolean r1 = CokerUnitRecipe.hasRecipeWithInput(copy1);
-						return r0 == r1;
-					}
-				}
+//						boolean r0 = CokerUnitRecipe.hasRecipeWithInput(copy0);
+//						boolean r1 = CokerUnitRecipe.hasRecipeWithInput(copy1);
+//						return r0 == r1;
+//					}
+//				}
 			}
 		}
 		return false;
@@ -175,7 +188,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		if(this.posInMultiblock.equals(Fluid_OUT) && (side == null || (getIsMirrored() ? (side == getFacing().rotateYCCW()) : (side == getFacing().getOpposite())))){
 			CokerUnitTileEntity master = master();
 			
-			return master != null && master.tanks[TANK_OUTPUT].getFluidAmount() > 0;
+			return master != null && master.bufferTanks[TANK_OUTPUT].getFluidAmount() > 0;
 		}
 		return false;
 	}
@@ -232,10 +245,10 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		boolean update = false;
 		
 		if(this.energyStorage.getEnergyStored() > 0 && this.processQueue.size() < getProcessQueueMaxLength()){
-			if(!getInventory(Inventory.INPUT).isEmpty() || this.tanks[TANK_INPUT].getFluidAmount() > 0){
-				CokerUnitRecipe recipe = CokerUnitRecipe.findRecipe(getInventory(Inventory.INPUT), this.tanks[TANK_INPUT].getFluid());
+			if(!getInventory(Inventory.INPUT).isEmpty() || this.bufferTanks[TANK_INPUT].getFluidAmount() > 0){
+				CokerUnitRecipe recipe = CokerUnitRecipe.findRecipe(getInventory(Inventory.INPUT), this.bufferTanks[TANK_INPUT].getFluid());
 				if(recipe != null && this.energyStorage.getEnergyStored() >= recipe.getTotalProcessEnergy()){
-					if(recipe.inputItem != null && recipe.inputFluid != null && this.tanks[TANK_INPUT].getFluidAmount() >= recipe.inputFluid.getAmount()){
+					if(recipe.inputItem != null && recipe.inputFluid != null && this.bufferTanks[TANK_INPUT].getFluidAmount() >= recipe.inputFluid.getAmount()){
 						CokingProcess process = new CokingProcess(recipe);
 						if(addProcessToQueue(process, true)){
 							addProcessToQueue(process, false);
@@ -248,8 +261,8 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		
 		super.tick();
 		
-		if(!getInventory(Inventory.INPUT_FILLED).isEmpty() && this.tanks[TANK_INPUT].getFluidAmount() < this.tanks[TANK_INPUT].getCapacity()){
-			ItemStack container = Utils.drainFluidContainer(this.tanks[TANK_INPUT], getInventory(Inventory.INPUT_FILLED), getInventory(Inventory.INPUT_EMPTY), null);
+		if(!getInventory(Inventory.INPUT_FILLED).isEmpty() && this.bufferTanks[TANK_INPUT].getFluidAmount() < this.bufferTanks[TANK_INPUT].getCapacity()){
+			ItemStack container = Utils.drainFluidContainer(this.bufferTanks[TANK_INPUT], getInventory(Inventory.INPUT_FILLED), getInventory(Inventory.INPUT_EMPTY), null);
 			if(!container.isEmpty()){
 				if(!getInventory(Inventory.INPUT_EMPTY).isEmpty() && ItemHandlerHelper.canItemStacksStack(getInventory(Inventory.INPUT_EMPTY), container)){
 					getInventory(Inventory.INPUT_EMPTY).grow(container.getCount());
@@ -264,9 +277,9 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			}
 		}
 		
-		if(this.tanks[TANK_OUTPUT].getFluidAmount() > 0){
+		if(this.bufferTanks[TANK_OUTPUT].getFluidAmount() > 0){
 			if(!getInventory(Inventory.OUTPUT_EMPTY).isEmpty()){
-				ItemStack filledContainer = Utils.fillFluidContainer(this.tanks[TANK_OUTPUT], getInventory(Inventory.OUTPUT_EMPTY), getInventory(Inventory.OUTPUT_FILLED), null);
+				ItemStack filledContainer = Utils.fillFluidContainer(this.bufferTanks[TANK_OUTPUT], getInventory(Inventory.OUTPUT_EMPTY), getInventory(Inventory.OUTPUT_FILLED), null);
 				if(!filledContainer.isEmpty()){
 					
 					if(getInventory(Inventory.OUTPUT_FILLED).getCount() == 1 && !Utils.isFluidContainerFull(filledContainer)){
@@ -331,7 +344,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	
 	@Override
 	public IFluidTank[] getInternalTanks(){
-		return this.tanks;
+		return this.bufferTanks;
 	}
 	
 	@Override
@@ -367,14 +380,14 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			// Fluid Input
 			if(this.posInMultiblock.equals(Fluid_IN)){
 				if(side == null || (getIsMirrored() ? (side == getFacing().rotateYCCW()) : (side == getFacing()))){
-					return new IFluidTank[]{master.tanks[TANK_INPUT]};
+					return new IFluidTank[]{master.bufferTanks[TANK_INPUT]};
 				}
 			}
 			
 			// Fluid Output
 			if(this.posInMultiblock.equals(Fluid_OUT)){
 				if(side == null || (getIsMirrored() ? (side == getFacing().rotateYCCW()) : (side == getFacing().getOpposite()))){
-					return new IFluidTank[]{master.tanks[TANK_OUTPUT]};
+					return new IFluidTank[]{master.bufferTanks[TANK_OUTPUT]};
 				}
 			}
 		}

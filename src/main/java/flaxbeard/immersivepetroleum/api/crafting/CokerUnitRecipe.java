@@ -2,8 +2,9 @@ package flaxbeard.immersivepetroleum.api.crafting;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 
 import blusunrize.immersiveengineering.api.crafting.FluidTagInput;
 import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
@@ -34,23 +35,13 @@ public class CokerUnitRecipe extends MultiblockRecipe{
 		return null;
 	}
 	
-	public static boolean hasRecipeWithInput(@Nullable ItemStack stack){
-		return hasRecipeWithInput(stack, null);
-	}
-	
-	public static boolean hasRecipeWithInput(@Nullable FluidStack fluid){
-		return hasRecipeWithInput(null, fluid);
-	}
-	
-	public static boolean hasRecipeWithInput(@Nullable ItemStack stack, @Nullable FluidStack fluid){
-		if(stack == null) stack = ItemStack.EMPTY;
-		if(fluid == null) fluid = FluidStack.EMPTY;
+	public static boolean hasRecipeWithInput(@Nonnull ItemStack stack, @Nonnull FluidStack fluid){
+		Objects.requireNonNull(stack);
+		Objects.requireNonNull(fluid);
 		
-		if(!stack.isEmpty() || !fluid.isEmpty()){
+		if(!stack.isEmpty() && !fluid.isEmpty()){
 			for(CokerUnitRecipe recipe:recipes.values()){
-				if(!stack.isEmpty() && recipe.inputItem != null && recipe.inputItem.test(stack)){
-					return true;
-				}else if(!fluid.isEmpty() && recipe.inputFluid != null && recipe.inputFluid.test(fluid)){
+				if(recipe.inputItem != null && recipe.inputFluid != null && recipe.inputItem.test(stack) && recipe.inputFluid.test(fluid)){
 					return true;
 				}
 			}
