@@ -10,6 +10,7 @@ import blusunrize.immersiveengineering.common.blocks.IEBlocks;
 import blusunrize.immersiveengineering.common.items.IEItems;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.IPTags;
+import flaxbeard.immersivepetroleum.api.crafting.builders.CokerUnitRecipeBuilder;
 import flaxbeard.immersivepetroleum.api.crafting.builders.DistillationRecipeBuilder;
 import flaxbeard.immersivepetroleum.api.crafting.builders.ReservoirTypeBuilder;
 import flaxbeard.immersivepetroleum.common.IPContent;
@@ -22,6 +23,7 @@ import net.minecraft.data.ShapedRecipeBuilder;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.IItemProvider;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.DimensionType;
@@ -44,6 +46,7 @@ public class IPRecipes extends RecipeProvider{
 		blockRecipes();
 		speedboatUpgradeRecipes();
 		distillationRecipes();
+		cokerRecipes();
 		reservoirs();
 	}
 	
@@ -81,6 +84,15 @@ public class IPRecipes extends RecipeProvider{
 			.setEnergy(2048)
 			.setTime(1)
 			.build(this.out, rl("distillationtower/oilcracking"));
+	}
+	
+	private void cokerRecipes(){
+		// TODO Replace Coal Block with "Petcoke Chunk" once it exists
+		CokerUnitRecipeBuilder.builder(new ItemStack(Items.COAL_BLOCK))
+			.addInput(IPTags.Items.bitumen)
+			.addInputFluid(FluidTags.WATER, 100)
+			.addOutputFluid(IPTags.Fluids.diesel, 5)
+			.build(this.out, rl("coking/petcoke"));
 	}
 	
 	private void speedboatUpgradeRecipes(){

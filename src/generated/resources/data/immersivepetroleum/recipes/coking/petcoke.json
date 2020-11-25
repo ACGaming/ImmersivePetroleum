@@ -1,0 +1,17 @@
+{
+  "type": "immersivepetroleum:coker",
+  "result": {
+    "item": "minecraft:coal_block"
+  },
+  "input": {
+    "tag": "forge:bitumen"
+  },
+  "inputfluid": {
+    "tag": "minecraft:water",
+    "amount": 100
+  },
+  "resultfluid": {
+    "tag": "forge:diesel",
+    "amount": 5
+  }
+}
