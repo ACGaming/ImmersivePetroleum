@@ -42,36 +42,29 @@ import net.minecraftforge.items.ItemHandlerHelper;
 public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTileEntity, CokerUnitRecipe> implements IInteractionObjectIE, IBlockBounds{
 	/** Do not Touch! Taken care of by {@link IPContent#registerTile(RegistryEvent.Register, Class, Block...)} */
 	public static TileEntityType<CokerUnitTileEntity> TYPE;
-
+	
+	static enum Inventory{
+		/** Inventory Item Input */
+		INPUT,
+		/** Inventory Fluid Input (Filled Bucket) */
+		INPUT_FILLED,
+		/** Inventory Fluid Input (Empty Bucket) */
+		INPUT_EMPTY,
+		/** Inventory Fluid Output (Empty Bucket) */
+		OUTPUT_EMPTY,
+		/** Inventory Fluid Output (Filled Bucket) */
+		OUTPUT_FILLED;
+		
+		public int id(){
+			return ordinal();
+		}
+	}
+	
 	/** Input Fluid Tank<br> */
 	public static final int TANK_INPUT = 0;
 	
 	/** Output Fluid Tank<br> */
 	public static final int TANK_OUTPUT = 1;
-
-	/** Inventory Item Input<br> */
-	public static final int INV_INPUT = 0;
-	
-	/** Inventory Item Storage. (Left column)<br> */
-	public static final int INV_STORAGE_A = 1;
-	
-	/** Inventory Item Storage. (Right column)<br> */
-	public static final int INV_STORAGE_B = 2;
-	
-	/** Inventory Item Output<br> */
-	public static final int INV_OUTPUT = 3;
-	
-	/** Inventory Fluid Input (Filled Bucket)<br> */
-	public static final int INV_INPUT_FILLED = 4;
-	
-	/** Inventory Fluid Input (Empty Bucket)<br> */
-	public static final int INV_INPUT_EMPTY = 5;
-	
-	/** Inventory Fluid Output (Empty Bucket)<br> */
-	public static final int INV_OUTPUT_EMPTY = 6;
-	
-	/** Inventory Fluid Output (Filled Bucket)<br> */
-	public static final int INV_OUTPUT_FILLED = 7;
 	
 	/** Template-Location of the Item Input Port for Chaining. (0 1 2)<br> */
 	public static final BlockPos Chaining_IN = new BlockPos(0, 1, 2);
@@ -165,7 +158,8 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 					if(master.tanks[TANK_INPUT].getFluid() == FluidStack.EMPTY){
 						return CokerUnitRecipe.hasRecipeWithInput(copy0);
 					}else{
-						FluidStack existing = master.tanks[TANK_INPUT].getFluid();
+						// TODO
+//						FluidStack existing = master.tanks[TANK_INPUT].getFluid();
 						boolean r0 = CokerUnitRecipe.hasRecipeWithInput(copy0);
 						boolean r1 = CokerUnitRecipe.hasRecipeWithInput(copy1);
 						return r0 == r1;
@@ -238,12 +232,11 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		boolean update = false;
 		
 		if(this.energyStorage.getEnergyStored() > 0 && this.processQueue.size() < getProcessQueueMaxLength()){
-			if(!this.inventory.get(INV_INPUT).isEmpty() || this.tanks[TANK_INPUT].getFluidAmount() > 0){
-				CokerUnitRecipe recipe = CokerUnitRecipe.findRecipe(this.inventory.get(INV_INPUT), this.tanks[TANK_INPUT].getFluid());
+			if(!getInventory(Inventory.INPUT).isEmpty() || this.tanks[TANK_INPUT].getFluidAmount() > 0){
+				CokerUnitRecipe recipe = CokerUnitRecipe.findRecipe(getInventory(Inventory.INPUT), this.tanks[TANK_INPUT].getFluid());
 				if(recipe != null && this.energyStorage.getEnergyStored() >= recipe.getTotalProcessEnergy()){
 					if(recipe.inputItem != null && recipe.inputFluid != null && this.tanks[TANK_INPUT].getFluidAmount() >= recipe.inputFluid.getAmount()){
-						MultiblockProcessInMachine<CokerUnitRecipe> process = new MultiblockProcessInMachine<CokerUnitRecipe>(recipe, INV_INPUT).setInputTanks(TANK_INPUT);
-						
+						CokingProcess process = new CokingProcess(recipe);
 						if(addProcessToQueue(process, true)){
 							addProcessToQueue(process, false);
 							update = true;
@@ -255,39 +248,39 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		
 		super.tick();
 		
-		if(!this.inventory.get(INV_INPUT_FILLED).isEmpty() && this.tanks[TANK_INPUT].getFluidAmount() < this.tanks[TANK_INPUT].getCapacity()){
-			ItemStack container = Utils.drainFluidContainer(this.tanks[TANK_INPUT], this.inventory.get(INV_INPUT_FILLED), this.inventory.get(INV_INPUT_EMPTY), null);
+		if(!getInventory(Inventory.INPUT_FILLED).isEmpty() && this.tanks[TANK_INPUT].getFluidAmount() < this.tanks[TANK_INPUT].getCapacity()){
+			ItemStack container = Utils.drainFluidContainer(this.tanks[TANK_INPUT], getInventory(Inventory.INPUT_FILLED), getInventory(Inventory.INPUT_EMPTY), null);
 			if(!container.isEmpty()){
-				if(!this.inventory.get(INV_INPUT_EMPTY).isEmpty() && ItemHandlerHelper.canItemStacksStack(this.inventory.get(INV_INPUT_EMPTY), container)){
-					this.inventory.get(INV_INPUT_EMPTY).grow(container.getCount());
-				}else if(this.inventory.get(INV_INPUT_EMPTY).isEmpty()){
-					this.inventory.set(INV_INPUT_EMPTY, container.copy());
+				if(!getInventory(Inventory.INPUT_EMPTY).isEmpty() && ItemHandlerHelper.canItemStacksStack(getInventory(Inventory.INPUT_EMPTY), container)){
+					getInventory(Inventory.INPUT_EMPTY).grow(container.getCount());
+				}else if(getInventory(Inventory.INPUT_EMPTY).isEmpty()){
+					setInventory(Inventory.INPUT_EMPTY, container.copy());
 				}
 				
-				this.inventory.get(INV_INPUT_FILLED).shrink(1);
-				if(this.inventory.get(INV_INPUT_FILLED).getCount() <= 0){
-					this.inventory.set(INV_INPUT_FILLED, ItemStack.EMPTY);
+				getInventory(Inventory.INPUT_FILLED).shrink(1);
+				if(getInventory(Inventory.INPUT_FILLED).getCount() <= 0){
+					setInventory(Inventory.INPUT_FILLED, ItemStack.EMPTY);
 				}
 			}
 		}
 		
 		if(this.tanks[TANK_OUTPUT].getFluidAmount() > 0){
-			if(!this.inventory.get(INV_OUTPUT_EMPTY).isEmpty()){
-				ItemStack filledContainer = Utils.fillFluidContainer(this.tanks[TANK_OUTPUT], this.inventory.get(INV_OUTPUT_EMPTY), this.inventory.get(INV_OUTPUT_FILLED), null);
+			if(!getInventory(Inventory.OUTPUT_EMPTY).isEmpty()){
+				ItemStack filledContainer = Utils.fillFluidContainer(this.tanks[TANK_OUTPUT], getInventory(Inventory.OUTPUT_EMPTY), getInventory(Inventory.OUTPUT_FILLED), null);
 				if(!filledContainer.isEmpty()){
 					
-					if(this.inventory.get(INV_OUTPUT_FILLED).getCount() == 1 && !Utils.isFluidContainerFull(filledContainer)){
-						this.inventory.set(INV_OUTPUT_FILLED, filledContainer.copy());
+					if(getInventory(Inventory.OUTPUT_FILLED).getCount() == 1 && !Utils.isFluidContainerFull(filledContainer)){
+						setInventory(Inventory.OUTPUT_FILLED, filledContainer.copy());
 					}else{
-						if(!this.inventory.get(INV_OUTPUT_FILLED).isEmpty() && ItemHandlerHelper.canItemStacksStack(this.inventory.get(INV_OUTPUT_FILLED), filledContainer)){
-							this.inventory.get(INV_OUTPUT_FILLED).grow(filledContainer.getCount());
-						}else if(this.inventory.get(INV_OUTPUT_FILLED).isEmpty()){
-							this.inventory.set(INV_OUTPUT_FILLED, filledContainer.copy());
+						if(!getInventory(Inventory.OUTPUT_FILLED).isEmpty() && ItemHandlerHelper.canItemStacksStack(getInventory(Inventory.OUTPUT_FILLED), filledContainer)){
+							getInventory(Inventory.OUTPUT_FILLED).grow(filledContainer.getCount());
+						}else if(getInventory(Inventory.OUTPUT_FILLED).isEmpty()){
+							setInventory(Inventory.OUTPUT_FILLED, filledContainer.copy());
 						}
 						
-						this.inventory.get(INV_OUTPUT_EMPTY).shrink(1);
-						if(this.inventory.get(INV_OUTPUT_EMPTY).getCount() <= 0){
-							this.inventory.set(INV_OUTPUT_EMPTY, ItemStack.EMPTY);
+						getInventory(Inventory.OUTPUT_EMPTY).shrink(1);
+						if(getInventory(Inventory.OUTPUT_EMPTY).getCount() <= 0){
+							setInventory(Inventory.OUTPUT_EMPTY, ItemStack.EMPTY);
 						}
 					}
 					
@@ -301,6 +294,14 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		if(update){
 			updateMasterBlock(null, true);
 		}
+	}
+	
+	public ItemStack getInventory(Inventory inv){
+		return this.inventory.get(inv.id());
+	}
+	
+	public ItemStack setInventory(Inventory inv, ItemStack stack){
+		return this.inventory.set(inv.id(), stack);
 	}
 	
 	@Override
@@ -335,7 +336,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	
 	@Override
 	public int[] getOutputSlots(){
-		return new int[]{INV_OUTPUT};
+		return new int[0];
 	}
 	
 	@Override
@@ -413,6 +414,13 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	}
 	
 	private static List<AxisAlignedBB> getShape(BlockPos posInMultiblock){
-		return Arrays.asList(new AxisAlignedBB(0.0625, 0.0625, 0.0625, 0.9375, 0.9375, 0.9375));
+		return Arrays.asList(new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0));
+	}
+	
+	class CokingProcess extends MultiblockProcessInMachine<CokerUnitRecipe>{
+		public CokingProcess(CokerUnitRecipe recipe){
+			super(recipe, Inventory.INPUT.id());
+			setInputTanks(TANK_INPUT);
+		}
 	}
 }
