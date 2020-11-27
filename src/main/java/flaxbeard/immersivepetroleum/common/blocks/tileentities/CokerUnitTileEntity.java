@@ -39,7 +39,9 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.IFluidTank;
+import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -320,12 +322,29 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 				}
 			}
 			
-			// TODO Fluid output to pipes
+			update |= FluidUtil.getFluidHandler(this.world, getBlockPosForPos(Fluid_OUT).offset(getFacing().getOpposite()), getFacing().getOpposite()).map(out -> {
+				if(this.bufferTanks[TANK_OUTPUT].getFluidAmount() > 0){
+					FluidStack fs = copyFluid(this.bufferTanks[TANK_OUTPUT].getFluid(), 100);
+					int accepted = out.fill(fs, FluidAction.SIMULATE);
+					if(accepted > 0){
+						int drained = out.fill(copyFluid(fs, Math.min(fs.getAmount(), accepted)), FluidAction.EXECUTE);
+						this.bufferTanks[TANK_OUTPUT].drain(copyFluid(fs, drained), FluidAction.EXECUTE);
+						return true;
+					}
+				}
+				return false;
+			}).orElse(false);
 		}
 		
 		if(update){
 			updateMasterBlock(null, true);
 		}
+	}
+	
+	private FluidStack copyFluid(FluidStack fluid, int amount){
+		FluidStack stack = fluid.copy();
+		stack.setAmount(amount);
+		return stack;
 	}
 	
 	public ItemStack getInventory(Inventory inv){
@@ -551,7 +570,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		public void tick(CokerUnitTileEntity cokerunit){
 			if(this.active){
 				if(!this.refInStack.isEmpty() && this.inputAmount > 0 && !this.tank.isEmpty()){
-					
+					// TODO Coking Process
 				}
 			}
 		}
@@ -616,6 +635,16 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			}
 			
 			return 0.0F;
+		}
+		
+		/** Expected input. For displaying purposes. <b>Do not alter in any way.</b> */
+		public ItemStack getInputItem(){
+			return this.refInStack;
+		}
+		
+		/** Expected output. For displaying purposes. <b>Do not alter in any way.</b> */
+		public ItemStack getOutputItem(){
+			return this.refOutStack;
 		}
 	}
 }
