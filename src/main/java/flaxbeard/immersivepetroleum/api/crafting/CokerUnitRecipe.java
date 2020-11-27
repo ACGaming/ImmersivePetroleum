@@ -49,6 +49,32 @@ public class CokerUnitRecipe extends MultiblockRecipe{
 		return false;
 	}
 	
+	public static boolean hasRecipeWithInput(ItemStack stack){
+		Objects.requireNonNull(stack);
+		
+		if(!stack.isEmpty()){
+			for(CokerUnitRecipe recipe:recipes.values()){
+				if(recipe.inputItem != null && recipe.inputItem.test(stack)){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public static boolean hasRecipeWithInput(@Nonnull FluidStack fluid){
+		Objects.requireNonNull(fluid);
+		
+		if(!fluid.isEmpty()){
+			for(CokerUnitRecipe recipe:recipes.values()){
+				if(recipe.inputFluid != null && recipe.inputFluid.test(fluid)){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
 	// just a "Reference"
 	// Water Input   -> FluidIn
 	// Bitumen Input -> Item In

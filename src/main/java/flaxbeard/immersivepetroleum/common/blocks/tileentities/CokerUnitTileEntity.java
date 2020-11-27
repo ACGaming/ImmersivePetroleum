@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -17,6 +18,7 @@ import blusunrize.immersiveengineering.common.blocks.IEBlockInterfaces.IInteract
 import blusunrize.immersiveengineering.common.blocks.generic.PoweredMultiblockTileEntity;
 import blusunrize.immersiveengineering.common.util.CapabilityReference;
 import blusunrize.immersiveengineering.common.util.Utils;
+import blusunrize.immersiveengineering.common.util.inventory.IEInventoryHandler;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.multiblocks.CokerUnitMultiblock;
@@ -33,6 +35,8 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.IFluidTank;
@@ -45,7 +49,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	/** Do not Touch! Taken care of by {@link IPContent#registerTile(RegistryEvent.Register, Class, Block...)} */
 	public static TileEntityType<CokerUnitTileEntity> TYPE;
 	
-	static enum Inventory{
+	public enum Inventory{
 		/** Inventory Item Input */
 		INPUT,
 		/** Inventory Fluid Input (Filled Bucket) */
@@ -98,7 +102,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	/** Template-Location of the Redstone Input Port. (6 1 4)<br> */
 	public static final Set<BlockPos> Redstone_IN = ImmutableSet.of(new BlockPos(6, 1, 4));
 	
-	public final NonNullList<ItemStack> inventory = NonNullList.withSize(6, ItemStack.EMPTY);
+	public final NonNullList<ItemStack> inventory = NonNullList.withSize(Inventory.values().length, ItemStack.EMPTY);
 	public final FluidTank[] bufferTanks = {new FluidTank(16000), new FluidTank(16000)};
 	public final CokingChamber[] chambers = {new CokingChamber(64, 8000), new CokingChamber(64, 8000)};
 	public CokerUnitTileEntity(){
@@ -163,21 +167,19 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		if(this.posInMultiblock.equals(Fluid_IN)){
 			if(side == null || (getIsMirrored() ? (side == getFacing().rotateYCCW()) : (side == getFacing()))){
 				CokerUnitTileEntity master = master();
-				// TODO
 				
-//				if(master != null && master.bufferTanks[TANK_INPUT].getFluidAmount() < master.bufferTanks[TANK_INPUT].getCapacity()){
-//					FluidStack copy0 = Utils.copyFluidStackWithAmount(resource, 1000, false);
-//					FluidStack copy1 = Utils.copyFluidStackWithAmount(master.bufferTanks[TANK_INPUT].getFluid(), 1000, false);
-//					
-//					if(master.bufferTanks[TANK_INPUT].getFluid() == FluidStack.EMPTY){
-//						return CokerUnitRecipe.hasRecipeWithInput(copy0);
-//					}else{
-//						FluidStack existing = master.tanks[TANK_INPUT].getFluid();
-//						boolean r0 = CokerUnitRecipe.hasRecipeWithInput(copy0);
-//						boolean r1 = CokerUnitRecipe.hasRecipeWithInput(copy1);
-//						return r0 == r1;
-//					}
-//				}
+				if(master != null && master.bufferTanks[TANK_INPUT].getFluidAmount() < master.bufferTanks[TANK_INPUT].getCapacity()){
+					FluidStack copy0 = Utils.copyFluidStackWithAmount(resource, 1000, false);
+					FluidStack copy1 = Utils.copyFluidStackWithAmount(master.bufferTanks[TANK_INPUT].getFluid(), 1000, false);
+					
+					if(master.bufferTanks[TANK_INPUT].getFluid() == FluidStack.EMPTY){
+						return CokerUnitRecipe.hasRecipeWithInput(copy0);
+					}else{
+						boolean r0 = CokerUnitRecipe.hasRecipeWithInput(copy0);
+						boolean r1 = CokerUnitRecipe.hasRecipeWithInput(copy1);
+						return r0 == r1;
+					}
+				}
 			}
 		}
 		return false;
@@ -224,6 +226,21 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		if(!output.isEmpty()){
 			
 		}
+	}
+	
+	private LazyOptional<IItemHandler> insertionHandler = registerConstantCap(
+			new IEInventoryHandler(5, this, 0, new boolean[]{true, false, false, false, false}, new boolean[8])
+	);
+	
+	@Override
+	public <C> LazyOptional<C> getCapability(@Nonnull Capability<C> capability, @Nullable Direction facing){
+		if((facing == null || this.posInMultiblock.equals(Item_IN)) && capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY){
+			CokerUnitTileEntity master = master();
+			if(master != null){
+				return master.insertionHandler.cast();
+			}
+		}
+		return super.getCapability(capability, facing);
 	}
 	
 	@Override
@@ -274,6 +291,8 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 				if(getInventory(Inventory.INPUT_FILLED).getCount() <= 0){
 					setInventory(Inventory.INPUT_FILLED, ItemStack.EMPTY);
 				}
+				
+				update = true;
 			}
 		}
 		
@@ -401,7 +420,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	
 	@Override
 	public boolean canUseGui(PlayerEntity player){
-		return false;
+		return this.formed;
 	}
 	
 	@Override
@@ -430,10 +449,173 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		return Arrays.asList(new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0));
 	}
 	
-	class CokingProcess extends MultiblockProcessInMachine<CokerUnitRecipe>{
+	public class CokingProcess extends MultiblockProcessInMachine<CokerUnitRecipe>{
 		public CokingProcess(CokerUnitRecipe recipe){
 			super(recipe, Inventory.INPUT.id());
 			setInputTanks(TANK_INPUT);
+		}
+	}
+	
+	public class CokingChamber{
+		public final FluidTank tank;
+		
+		ItemStack refInStack = ItemStack.EMPTY;
+		int inputAmount = 0;
+		int inputAmountMax = 0;
+		
+		ItemStack refOutStack = ItemStack.EMPTY;
+		int outputAmount = 0;
+		
+		// TODO Do the cycle stuff
+		/**
+		 * --- This should only be false if, and only if ---<br>
+		 * The tank is Empty.<br>
+		 * Both Input and Output reference stacks are set to ItemStack.EMPTY<br>
+		 * Both Input and Output amount are set to 0<br>
+		 */
+		boolean active = false;
+		
+		boolean dumping = false;
+		
+		final int capacity;
+		public CokingChamber(int itemCapacity, int fluidCapacity){
+			this.capacity = itemCapacity;
+			this.tank = new FluidTank(fluidCapacity);
+		}
+		
+		public ItemStack addStack(@Nonnull ItemStack stack){
+			if(!stack.isEmpty()){
+				if(this.refInStack.isEmpty()){
+					this.refInStack = stack.copy();
+					this.refInStack.setCount(1);
+					
+					this.inputAmount = stack.getCount();
+					this.inputAmountMax = this.inputAmount;
+					
+				}else if(this.refInStack.getItem() == stack.getItem()){
+					int free = this.capacity - getTotalAmount();
+					if(free >= stack.getCount()){
+						this.inputAmount += stack.getCount();
+						this.inputAmountMax += stack.getCount();
+						
+						return ItemStack.EMPTY;
+					}
+				}
+			}
+			
+			return stack;
+		}
+		
+		/** Marks this chamber as done and starts the dumping process */
+		public void markForDump(){
+			this.dumping = true;
+		}
+		
+		/** Get the next stack. Returns {@link ItemStack#EMPTY} once the chamber is empty */
+		public ItemStack next(boolean peek){
+			if(this.dumping && this.outputAmount > 0){
+				ItemStack stack = this.refOutStack.copy();
+				stack.setCount(this.outputAmount >= 64 ? 64 : this.outputAmount);
+				
+				if(!peek){
+					this.outputAmount -= stack.getCount();
+				}
+				
+				return stack;
+			}
+			
+			return ItemStack.EMPTY;
+		}
+		
+		/**
+		 * Pulls the Requested amount of Items out of the Chamber.
+		 * 
+		 * @param amount
+		 * @return Stack with size <= <i>amount</i>, or {@link ItemStack#EMPTY} if chamber has been emptied out.
+		 */
+		public ItemStack pull(int amount){
+			if(this.dumping && this.outputAmount > 0){
+				int count = this.outputAmount >= 64 ? 64 : this.outputAmount;
+				
+				ItemStack stack = this.refOutStack.copy();
+				stack.setCount(count);
+				
+				this.outputAmount -= count;
+				
+				return stack;
+			}
+			
+			return ItemStack.EMPTY;
+		}
+		
+		public void tick(CokerUnitTileEntity cokerunit){
+			if(this.active){
+				if(!this.refInStack.isEmpty() && this.inputAmount > 0 && !this.tank.isEmpty()){
+					
+				}
+			}
+		}
+		
+		public CokingChamber readFromNBT(CompoundNBT nbt){
+			this.tank.readFromNBT(nbt.getCompound("tank"));
+			
+			CompoundNBT input = nbt.getCompound("input");
+			this.refInStack.deserializeNBT(input);
+			this.inputAmount = input.getInt("realcount");
+			
+			CompoundNBT output = nbt.getCompound("output");
+			this.refOutStack.deserializeNBT(output);
+			this.outputAmount = output.getInt("realcount");
+			
+			return this;
+		}
+		
+		public CompoundNBT writeToNBT(CompoundNBT nbt){
+			nbt.put("tank", this.tank.writeToNBT(new CompoundNBT()));
+			
+			CompoundNBT input = this.refInStack.serializeNBT();
+			input.putInt("realcount", this.inputAmount);
+			nbt.put("input", input);
+			
+			CompoundNBT output = this.refOutStack.serializeNBT();
+			output.putInt("realcount", this.outputAmount);
+			nbt.put("output", output);
+			
+			return nbt;
+		}
+		
+		public boolean isActive(){
+			return this.active;
+		}
+		
+		public boolean isDumping(){
+			return this.dumping;
+		}
+		
+		/** returns the total chamber capacity*/
+		public int getCapacity(){
+			return this.capacity;
+		}
+		
+		/** returns the combined I/O Amount */
+		public int getTotalAmount(){
+			return this.inputAmount + this.outputAmount;
+		}
+		
+		public float getRemaining(){
+			if(this.inputAmountMax>0){
+				return this.inputAmount / (float)this.inputAmountMax;
+			}
+			
+			return 0.0F;
+		}
+		
+		public float getCompleted(){
+			if(this.inputAmountMax>0){
+				return this.outputAmount / (float)this.inputAmountMax;
+			}
+			
+			return 0.0F;
 		}
 	}
 }
