@@ -304,7 +304,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		}
 		
 		for(int i = 0;i < this.chambers.length;i++){
-			this.chambers[i].tick(this);
+			update |= this.chambers[i].tick(this);
 		}
 		
 		if(!getInventory(Inventory.INPUT_FILLED).isEmpty() && this.bufferTanks[TANK_INPUT].getFluidAmount() < this.bufferTanks[TANK_INPUT].getCapacity()){
@@ -523,14 +523,14 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		@Nullable
 		protected CokerUnitRecipe recipe = null;
 		public final FluidTank tank;
-		public final int capacity;
 		
-		int inputAmount = 0;
-		int inputAmountMax = 0;
-		int outputAmount = 0;
+		/** Total capacity. inputAmount + outputAmount, should not go above this */
+		protected final int capacity;
+		protected int inputAmount = 0;
+		protected int outputAmount = 0;
 		
-		boolean active = false;
-		boolean dumping = false;
+		protected boolean active = false;
+		protected boolean dumping = false;
 		
 		public CokingChamber(int itemCapacity, int fluidCapacity){
 			this.capacity = itemCapacity;
@@ -550,14 +550,10 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 					
 					int filled = this.capacity - getTotalAmount();
 					if(stack.getCount() < filled){
-						
 						this.inputAmount += stack.getCount();
-						this.inputAmountMax += stack.getCount();
-						
 						filled = stack.getCount();
 					}else{
 						this.inputAmount += filled;
-						this.inputAmountMax += filled;
 					}
 					
 					return filled;
@@ -611,17 +607,33 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			return ItemStack.EMPTY;
 		}
 		
-		public void tick(CokerUnitTileEntity cokerunit){
+		int timer = 0;
+		public boolean tick(CokerUnitTileEntity cokerunit){
 			if(this.recipe == null){
-				return;
+				return false;
 			}
 			
 			if(!this.dumping){
 				// TODO Coking Process
 				
 				if(!getInputItem().isEmpty() && this.inputAmount > 0 && !this.tank.isEmpty()){
-					if(cokerunit.energyStorage.getEnergyStored() > 0 && cokerunit.energyStorage.getEnergyStored() >= this.recipe.getTotalProcessEnergy()){
+					if(cokerunit.energyStorage.getEnergyStored() >= this.recipe.getTotalProcessEnergy()){
+						cokerunit.energyStorage.extractEnergy(this.recipe.getTotalProcessEnergy(), false);
 						
+						this.timer++;
+						if(this.timer >= 10){
+							this.timer = 0;
+							
+							this.tank.drain(Utils.copyFluidStackWithAmount(this.tank.getFluid(), this.recipe.inputFluid.getAmount(), false), FluidAction.EXECUTE);
+							this.inputAmount--;
+							this.outputAmount++;
+							
+							if(this.inputAmount <= 0){
+								this.dumping = true;
+							}
+						}
+						
+						return true; // Tells the coker to update
 					}
 				}
 				
@@ -630,12 +642,19 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 				// Dumping should not cost energy, because gravity is a thing too..
 				
 			}
+			
+			return false;
 		}
 		
 		public CokingChamber readFromNBT(CompoundNBT nbt){
 			this.tank.readFromNBT(nbt.getCompound("tank"));
-			this.inputAmount = nbt.getInt("incount");
-			this.outputAmount = nbt.getInt("outcount");
+			
+			this.inputAmount = nbt.getInt("input");
+			this.outputAmount = nbt.getInt("output");
+			this.timer = nbt.getInt("timer");
+			
+			this.active = nbt.getBoolean("active");
+			this.dumping = nbt.getBoolean("dumping");
 			
 			if(nbt.contains("recipe", NBT.TAG_STRING)){
 				try{
@@ -653,8 +672,13 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		public CompoundNBT writeToNBT(CompoundNBT nbt){
 			nbt.put("tank", this.tank.writeToNBT(new CompoundNBT()));
 			
-			nbt.putInt("incount", this.inputAmount);
-			nbt.putInt("outcount", this.outputAmount);
+			nbt.putInt("input", this.inputAmount);
+			nbt.putInt("output", this.outputAmount);
+			nbt.putInt("timer", this.timer);
+			
+			nbt.putBoolean("active", this.active);
+			nbt.putBoolean("dumping", this.dumping);
+			
 			
 			if(this.recipe != null){
 				nbt.putString("recipe", this.recipe.getId().toString());
@@ -682,16 +706,16 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		}
 		
 		public float getRemaining(){
-			if(this.inputAmountMax > 0){
-				return this.inputAmount / (float) this.inputAmountMax;
+			if(getTotalAmount() > 0){
+				return this.inputAmount / (float) getTotalAmount();
 			}
 			
 			return 0.0F;
 		}
 		
 		public float getCompleted(){
-			if(this.inputAmountMax > 0){
-				return this.outputAmount / (float) this.inputAmountMax;
+			if(getTotalAmount() > 0){
+				return this.outputAmount / (float) getTotalAmount();
 			}
 			
 			return 0.0F;
