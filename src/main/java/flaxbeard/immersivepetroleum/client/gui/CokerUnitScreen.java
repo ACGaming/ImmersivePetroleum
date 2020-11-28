@@ -68,9 +68,11 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 		
 		switch(chamberId){
 			case CHAMBER_A:{
+				ClientUtils.handleGuiTank(matrix, chamber.tank, x, y, 6, 38, 0, 0, 0, 0, mx, my, GUI_TEXTURE, null);
 				break;
 			}
 			case CHAMBER_B:{
+				ClientUtils.handleGuiTank(matrix, chamber.tank, x, y, 6, 38, 0, 0, 0, 0, mx, my, GUI_TEXTURE, null);
 				break;
 			}
 			default:break;
@@ -82,8 +84,15 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 			float remaining = 100 * chamber.getRemaining();
 			
 			tooltip.add(new StringTextComponent("Items: " + chamber.getTotalAmount() + "/" + chamber.getCapacity()));
-			tooltip.add(new StringTextComponent("Input: ").append(chamber.getInputItem().getDisplayName()));
-			tooltip.add(new StringTextComponent("Output: ").append(chamber.getOutputItem().getDisplayName()));
+			
+			ITextComponent inString = new StringTextComponent("Input: ")
+					.appendString(chamber.getInputItem().getDisplayName().getString());
+			
+			ITextComponent outString = new StringTextComponent("Output: ")
+					.appendString(chamber.getOutputItem().getDisplayName().getString());
+			
+			tooltip.add(inString);
+			tooltip.add(outString);
 			tooltip.add(new StringTextComponent("Active? " + (chamber.isActive() ? "Yes." : "No.")));
 			tooltip.add(new StringTextComponent("Dumping? " + (chamber.isDumping() ? "Yes." : "No.")));
 			tooltip.add(new StringTextComponent(String.format(Locale.US, "%.1f", completed) + "% Completed."));

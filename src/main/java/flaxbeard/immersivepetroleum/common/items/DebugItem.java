@@ -9,15 +9,17 @@ import org.lwjgl.glfw.GLFW;
 import blusunrize.immersiveengineering.api.DimensionChunkCoords;
 import blusunrize.immersiveengineering.client.ClientUtils;
 import blusunrize.immersiveengineering.common.blocks.generic.PoweredMultiblockTileEntity;
+import blusunrize.immersiveengineering.common.util.Utils;
 import blusunrize.immersiveengineering.common.util.inventory.MultiFluidTank;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import flaxbeard.immersivepetroleum.api.crafting.pumpjack.ReservoirWorldInfo;
 import flaxbeard.immersivepetroleum.api.crafting.pumpjack.PumpjackHandler;
 import flaxbeard.immersivepetroleum.api.crafting.pumpjack.PumpjackHandler.ReservoirType;
+import flaxbeard.immersivepetroleum.api.crafting.pumpjack.ReservoirWorldInfo;
 import flaxbeard.immersivepetroleum.client.model.IPModels;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.IPSaveData;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.AutoLubricatorTileEntity;
+import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.DistillationTowerTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.GasGeneratorTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.PumpjackTileEntity;
@@ -195,6 +197,43 @@ public class DebugItem extends IPItemBase{
 		
 		TileEntity te=context.getWorld().getTileEntity(context.getPos());
 		switch(mode){
+			case GENERAL_TEST:{
+				if(context.getWorld().isRemote){
+					CokerUnitTileEntity.CokingChamber chamber = new CokerUnitTileEntity.CokingChamber(64, 8000);
+					
+					ItemStack refStack = new ItemStack(IPContent.Items.bitumen, 64);
+					
+					ItemStack last = chamber.refInStack;
+					ImmersivePetroleum.log.info("Init added {} items.", chamber.addStack(Utils.copyStackWithAmount(refStack, 32), false));
+					
+					if(last != chamber.refInStack){
+						ImmersivePetroleum.log.info("Changed to -> " + chamber.refInStack.toString());
+					}else if(chamber.refInStack==null){
+						ImmersivePetroleum.log.info("Still null?");
+					}
+					
+					ImmersivePetroleum.log.info("Name: {}", chamber.refInStack.toString());
+					
+					// Test 1
+					{
+						int tryCount = 7;
+						for(int i = 0;i < 8;i++){
+							int accepted = chamber.addStack(Utils.copyStackWithAmount(refStack, tryCount), true);
+							int count = 0;
+							if(accepted > 0){
+								count = Math.min(accepted, tryCount);
+								
+								chamber.addStack(Utils.copyStackWithAmount(refStack, count), false);
+								
+							}
+							
+							ImmersivePetroleum.log.info("{} {} {}", chamber.getTotalAmount(), accepted, count);
+						}
+					}
+				}
+				
+				return ActionResultType.PASS;
+			}
 			case INFO_TE_DISTILLATION_TOWER:{
 				if(te instanceof DistillationTowerTileEntity && !context.getWorld().isRemote){
 					DistillationTowerTileEntity tower=(DistillationTowerTileEntity)te;
@@ -441,6 +480,7 @@ public class DebugItem extends IPItemBase{
 		RESERVOIR_BIG_SCAN("Scan 5 Block Radius Area"),
 		CLEAR_RESERVOIR_CACHE("Clear Reservoir Cache"),
 		REFRESH_ALL_IPMODELS("Refresh all IPModels"),
+		GENERAL_TEST("Always changing test.")
 		;
 		
 		public final String display;

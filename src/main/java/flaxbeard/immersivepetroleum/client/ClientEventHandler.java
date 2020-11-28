@@ -36,6 +36,8 @@ import flaxbeard.immersivepetroleum.api.crafting.pumpjack.PumpjackHandler.Reserv
 import flaxbeard.immersivepetroleum.common.CommonEventHandler;
 import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.blocks.AutoLubricatorBlock;
+import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEntity;
+import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEntity.CokingChamber;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.DistillationTowerTileEntity;
 import flaxbeard.immersivepetroleum.common.entity.SpeedboatEntity;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
@@ -355,58 +357,84 @@ public class ClientEventHandler{
 		if(ClientUtils.mc().player != null && event.getType() == RenderGameOverlayEvent.ElementType.TEXT){
 			PlayerEntity player = ClientUtils.mc().player;
 			
-			ItemStack main=player.getHeldItem(Hand.MAIN_HAND);
-			ItemStack off=player.getHeldItem(Hand.OFF_HAND);
+			ItemStack main = player.getHeldItem(Hand.MAIN_HAND);
+			ItemStack off = player.getHeldItem(Hand.OFF_HAND);
 			
-			if((main!=ItemStack.EMPTY && main.getItem()==IPContent.debugItem) || (off!=ItemStack.EMPTY && off.getItem()==IPContent.debugItem)){
-				if(ClientUtils.mc().objectMouseOver != null){
-					RayTraceResult rt = ClientUtils.mc().objectMouseOver;
+			if((main != ItemStack.EMPTY && main.getItem() == IPContent.debugItem) || (off != ItemStack.EMPTY && off.getItem() == IPContent.debugItem)){
+				RayTraceResult rt = ClientUtils.mc().objectMouseOver;
+				
+				if(rt != null && rt.getType() == RayTraceResult.Type.BLOCK){
+					BlockRayTraceResult result = (BlockRayTraceResult) rt;
+					World world = player.world;
 					
-					if(rt.getType()==RayTraceResult.Type.BLOCK && rt instanceof BlockRayTraceResult){
-						BlockRayTraceResult result=(BlockRayTraceResult)rt;
-						
-						World world=player.world;
-						
-						TileEntity te=world.getTileEntity(result.getPos());
-						if(te instanceof DistillationTowerTileEntity){
-							DistillationTowerTileEntity tower=(DistillationTowerTileEntity)te;
-							if(!tower.offsetToMaster.equals(BlockPos.ZERO)){
-								tower=tower.master();
-							}
-							
-							List<String> strings=new ArrayList<>();
-							strings.add("Distillation Tower");
-							strings.add(tower.energyStorage.getEnergyStored()+"/"+tower.energyStorage.getMaxEnergyStored()+"RF");
-							
-							{
-								MultiFluidTank tank=tower.tanks[DistillationTowerTileEntity.TANK_INPUT];
-								if(tank.fluids.size()>0){
-									strings.add("Input");
-									for(int i=0;i<tank.fluids.size();i++){
-										FluidStack fstack=tank.fluids.get(i);
-										strings.add("  "+fstack.getDisplayName()+" "+fstack.getAmount()+"mB");
-									}
-								}
-							}
-							
-							{
-								MultiFluidTank tank=tower.tanks[DistillationTowerTileEntity.TANK_OUTPUT];
-								if(tank.fluids.size()>0){
-									strings.add("Output");
-									for(int i=0;i<tank.fluids.size();i++){
-										FluidStack fstack=tank.fluids.get(i);
-										strings.add("  "+fstack.getDisplayName()+" "+fstack.getAmount()+"mB");
-									}
-								}
-							}
-							
-							MatrixStack matrix=event.getMatrixStack();
-							matrix.push();
-							for(int i=0;i<strings.size();i++){
-								ClientUtils.mc().fontRenderer.drawStringWithShadow(matrix, strings.get(i), 1, 1+(i * ClientUtils.font().FONT_HEIGHT), 0xffffff);
-							}
-							matrix.pop();
+					List<String> debugOut = new ArrayList<>();
+					
+					TileEntity te = world.getTileEntity(result.getPos());
+					if(te instanceof DistillationTowerTileEntity){
+						DistillationTowerTileEntity tower = (DistillationTowerTileEntity) te;
+						if(!tower.offsetToMaster.equals(BlockPos.ZERO)){
+							tower = tower.master();
 						}
+						
+						debugOut.add("Distillation Tower");
+						debugOut.add(tower.energyStorage.getEnergyStored() + "/" + tower.energyStorage.getMaxEnergyStored() + "RF");
+						
+						{
+							MultiFluidTank tank = tower.tanks[DistillationTowerTileEntity.TANK_INPUT];
+							if(tank.fluids.size() > 0){
+								debugOut.add("Input");
+								for(int i = 0;i < tank.fluids.size();i++){
+									FluidStack fstack = tank.fluids.get(i);
+									debugOut.add("  " + fstack.getDisplayName().getString() + " " + fstack.getAmount() + "mB");
+								}
+							}
+						}
+						
+						{
+							MultiFluidTank tank = tower.tanks[DistillationTowerTileEntity.TANK_OUTPUT];
+							if(tank.fluids.size() > 0){
+								debugOut.add("Output");
+								for(int i = 0;i < tank.fluids.size();i++){
+									FluidStack fstack = tank.fluids.get(i);
+									debugOut.add("  " + fstack.getDisplayName().getString() + " " + fstack.getAmount() + "mB");
+								}
+							}
+						}
+						
+					}else if(te instanceof CokerUnitTileEntity){
+						CokerUnitTileEntity coker = (CokerUnitTileEntity) te;
+						if(!coker.offsetToMaster.equals(BlockPos.ZERO)){
+							coker = coker.master();
+						}
+						
+						debugOut.add("Coker Unit");
+						debugOut.add(coker.energyStorage.getEnergyStored() + "/" + coker.energyStorage.getMaxEnergyStored() + "RF");
+						
+						
+						for(int i = 0;i < coker.chambers.length;i++){
+							CokingChamber chamber = coker.chambers[i];
+							
+							debugOut.add("Chamber " + i + ":");
+							
+							float completed = 100 * chamber.getCompleted();
+							float remaining = 100 * chamber.getRemaining();
+							
+							debugOut.add("  Items: " + chamber.getTotalAmount() + " of " + chamber.getCapacity());
+							debugOut.add("  I/O: " + chamber.getInputItem().getDisplayName().getString()+" / " + chamber.getOutputItem().getDisplayName().getString());
+							debugOut.add("  Active? " + (chamber.isActive() ? "Yes." : "No."));
+							debugOut.add("  Dumping? " + (chamber.isDumping() ? "Yes." : "No."));
+							debugOut.add(String.format(Locale.US, "  %.1f", completed) + "% Completed.");
+							debugOut.add(String.format(Locale.US, "  %.1f", remaining) + "% Remaining.");
+						}
+					}
+					
+					if(!debugOut.isEmpty()){
+						MatrixStack matrix = event.getMatrixStack();
+						matrix.push();
+						for(int i = 0;i < debugOut.size();i++){
+							ClientUtils.font().drawStringWithShadow(matrix, debugOut.get(i), 1, 1 + (i * ClientUtils.font().FONT_HEIGHT), -1);
+						}
+						matrix.pop();
 					}
 				}
 			}
