@@ -63,6 +63,7 @@ import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Quaternion;
 import net.minecraft.util.math.vector.Vector3d;
@@ -432,11 +433,11 @@ public class ClientEventHandler{
 							float remaining = 100 * chamber.getRemaining();
 							
 							debugOut.add("  Items: " + chamber.getTotalAmount() + " / " + chamber.getCapacity());
-							debugOut.add("  I/O: " + chamber.getInputItem().getDisplayName().getString()+" / " + chamber.getOutputItem().getDisplayName().getString());
+							debugOut.add("  I/O: " + chamber.getInputItem().getDisplayName().getString() + " / " + chamber.getOutputItem().getDisplayName().getString());
 							debugOut.add("  Active? " + (chamber.isActive() ? "Yes." : "No."));
 							debugOut.add("  Dumping? " + (chamber.isDumping() ? "Yes." : "No."));
-							debugOut.add(String.format(Locale.US, "  %.1f", completed) + "% Completed.");
-							debugOut.add(String.format(Locale.US, "  %.1f", remaining) + "% Remaining.");
+							debugOut.add("  " + MathHelper.floor(completed) + "% Completed. (Raw: " + completed + ")");
+							debugOut.add("  " + MathHelper.floor(remaining) + "% Remaining. (Raw: " + remaining + ")");
 						}
 					}
 					

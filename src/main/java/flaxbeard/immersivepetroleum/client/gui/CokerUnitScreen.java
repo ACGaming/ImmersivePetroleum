@@ -7,7 +7,6 @@ import static flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitT
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import org.lwjgl.opengl.GL11;
 
@@ -19,6 +18,7 @@ import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEnti
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEntity.CokingChamber;
 import flaxbeard.immersivepetroleum.common.gui.CokerUnitContainer;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
@@ -53,8 +53,7 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 		chamberDisplay(transform, guiLeft + 120, guiTop + 24, 6, 38, CHAMBER_B, mx, my, partialTicks, tooltip);
 		
 		// Power Stored
-		if(mx > guiLeft + 167 && mx < guiLeft + 175 &&
-			my > guiTop + 66 && my < guiTop + 88){
+		if(mx > guiLeft + 167 && mx < guiLeft + 175 && my > guiTop + 66 && my < guiTop + 88){
 			tooltip.add(new StringTextComponent(tile.getEnergyStored(null) + "/" + tile.getMaxEnergyStored(null) + " RF"));
 		}
 		
@@ -85,22 +84,15 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 			float remaining = 100 * chamber.getRemaining();
 			
 			tooltip.add(new StringTextComponent("State: ")
-					.append(new StringTextComponent("Active").mergeStyle(chamber.isActive()?TextFormatting.GREEN:TextFormatting.RED))
+					.append(new StringTextComponent("Active").mergeStyle(chamber.isActive() ? TextFormatting.GREEN : TextFormatting.RED))
 					.appendString(" | ")
-					.append(new StringTextComponent("Dumping").mergeStyle(chamber.isActive()?TextFormatting.GREEN:TextFormatting.RED)));
+					.append(new StringTextComponent("Dumping").mergeStyle(chamber.isDumping() ? TextFormatting.GREEN : TextFormatting.RED)));
 			
 			tooltip.add(new StringTextComponent("Items: " + chamber.getTotalAmount() + " / " + chamber.getCapacity()));
-			
-			ITextComponent inString = new StringTextComponent("Input: ")
-					.appendString(chamber.getInputItem().getDisplayName().getString());
-			
-			ITextComponent outString = new StringTextComponent("Output: ")
-					.appendString(chamber.getOutputItem().getDisplayName().getString());
-			
-			tooltip.add(inString);
-			tooltip.add(outString);
-			tooltip.add(new StringTextComponent(String.format(Locale.US, "%.1f", completed) + "% Completed."));
-			tooltip.add(new StringTextComponent(String.format(Locale.US, "%.1f", remaining) + "% Remaining."));
+			tooltip.add(new StringTextComponent("Input: ").appendString(chamber.getInputItem().getDisplayName().getString()));
+			tooltip.add(new StringTextComponent("Output: ").appendString(chamber.getOutputItem().getDisplayName().getString()));
+			tooltip.add(new StringTextComponent(MathHelper.floor(completed) + "% Completed. (Raw: " + completed + ")"));
+			tooltip.add(new StringTextComponent(MathHelper.floor(remaining) + "% Remaining. (Raw: " + remaining + ")"));
 			
 			tooltip.add(new StringTextComponent("-------------"));
 			ClientUtils.handleGuiTank(matrix, chamber.tank, x, y, w, x, 0, 0, 0, 0, mx, my, GUI_TEXTURE, tooltip);
