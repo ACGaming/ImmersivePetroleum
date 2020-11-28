@@ -3,15 +3,15 @@
   "result": {
     "item": "minecraft:coal_block"
   },
+  "resultfluid": {
+    "tag": "forge:diesel",
+    "amount": 5
+  },
   "input": {
     "tag": "forge:bitumen"
   },
   "inputfluid": {
     "tag": "minecraft:water",
-    "amount": 100
-  },
-  "resultfluid": {
-    "tag": "forge:diesel",
-    "amount": 5
+    "amount": 125
   }
 }

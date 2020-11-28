@@ -88,10 +88,9 @@ public class IPRecipes extends RecipeProvider{
 	
 	private void cokerRecipes(){
 		// TODO Replace Coal Block with "Petcoke Chunk" once it exists
-		CokerUnitRecipeBuilder.builder(new ItemStack(Items.COAL_BLOCK))
-			.addInput(IPTags.Items.bitumen)
-			.addInputFluid(FluidTags.WATER, 100)
-			.addOutputFluid(IPTags.Fluids.diesel, 5)
+		CokerUnitRecipeBuilder.builder(new ItemStack(Items.COAL_BLOCK), IPTags.Fluids.diesel, 5)
+			.addInputItem(IPTags.Items.bitumen, 1)
+			.addInputFluid(FluidTags.WATER, 125)
 			.build(this.out, rl("coking/petcoke"));
 	}
 	

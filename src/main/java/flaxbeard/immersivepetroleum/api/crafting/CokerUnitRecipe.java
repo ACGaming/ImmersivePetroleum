@@ -8,13 +8,13 @@ import javax.annotation.Nonnull;
 
 import blusunrize.immersiveengineering.api.crafting.FluidTagInput;
 import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
+import blusunrize.immersiveengineering.api.crafting.IngredientWithSize;
 import blusunrize.immersiveengineering.api.crafting.MultiblockRecipe;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.common.IPConfig;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
@@ -84,13 +84,13 @@ public class CokerUnitRecipe extends MultiblockRecipe{
 	public final ItemStack outputItem;
 	public final FluidTagInput outputFluid;
 	
-	public final Ingredient inputItem;
+	public final IngredientWithSize inputItem;
 	public final FluidTagInput inputFluid;
 	
 	protected int totalProcessTime;
 	protected int totalProcessEnergy;
 	
-	public CokerUnitRecipe(ResourceLocation id, ItemStack outputItem, FluidTagInput outputFluid, Ingredient inputItem, FluidTagInput inputFluid, int energy){
+	public CokerUnitRecipe(ResourceLocation id, ItemStack outputItem, FluidTagInput outputFluid, IngredientWithSize inputItem, FluidTagInput inputFluid, int energy){
 		super(ItemStack.EMPTY, TYPE, id);
 		this.inputFluid = inputFluid;
 		this.inputItem = inputItem;
