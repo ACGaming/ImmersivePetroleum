@@ -12,6 +12,7 @@ import blusunrize.immersiveengineering.common.blocks.generic.PoweredMultiblockTi
 import blusunrize.immersiveengineering.common.util.Utils;
 import blusunrize.immersiveengineering.common.util.inventory.MultiFluidTank;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
+import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
 import flaxbeard.immersivepetroleum.api.crafting.pumpjack.PumpjackHandler;
 import flaxbeard.immersivepetroleum.api.crafting.pumpjack.PumpjackHandler.ReservoirType;
 import flaxbeard.immersivepetroleum.api.crafting.pumpjack.ReservoirWorldInfo;
@@ -29,6 +30,7 @@ import flaxbeard.immersivepetroleum.common.network.MessageDebugSync;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
@@ -202,17 +204,13 @@ public class DebugItem extends IPItemBase{
 					CokerUnitTileEntity.CokingChamber chamber = new CokerUnitTileEntity.CokingChamber(64, 8000);
 					
 					ItemStack refStack = new ItemStack(IPContent.Items.bitumen, 64);
+					FluidStack refFluid = new FluidStack(Fluids.WATER, 1000);
 					
-					ItemStack last = chamber.refInStack;
-					ImmersivePetroleum.log.info("Init added {} items.", chamber.addStack(Utils.copyStackWithAmount(refStack, 32), false));
+					CokerUnitRecipe recipe = CokerUnitRecipe.findRecipe(refStack, refFluid);
+					chamber.setRecipe(recipe);
 					
-					if(last != chamber.refInStack){
-						ImmersivePetroleum.log.info("Changed to -> " + chamber.refInStack.toString());
-					}else if(chamber.refInStack==null){
-						ImmersivePetroleum.log.info("Still null?");
-					}
-					
-					ImmersivePetroleum.log.info("Name: {}", chamber.refInStack.toString());
+					ImmersivePetroleum.log.info("Input: " + chamber.getInputItem().getDisplayName().getString());
+					ImmersivePetroleum.log.info("Output: " + chamber.getOutputItem().getDisplayName().getString());
 					
 					// Test 1
 					{

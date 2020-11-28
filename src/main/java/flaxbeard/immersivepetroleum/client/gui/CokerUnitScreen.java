@@ -21,6 +21,7 @@ import flaxbeard.immersivepetroleum.common.gui.CokerUnitContainer;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.gui.GuiUtils;
 
 public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
@@ -83,7 +84,12 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 			float completed = 100 * chamber.getCompleted();
 			float remaining = 100 * chamber.getRemaining();
 			
-			tooltip.add(new StringTextComponent("Items: " + chamber.getTotalAmount() + "/" + chamber.getCapacity()));
+			tooltip.add(new StringTextComponent("State: ")
+					.append(new StringTextComponent("Active").mergeStyle(chamber.isActive()?TextFormatting.GREEN:TextFormatting.RED))
+					.appendString(" | ")
+					.append(new StringTextComponent("Dumping").mergeStyle(chamber.isActive()?TextFormatting.GREEN:TextFormatting.RED)));
+			
+			tooltip.add(new StringTextComponent("Items: " + chamber.getTotalAmount() + " / " + chamber.getCapacity()));
 			
 			ITextComponent inString = new StringTextComponent("Input: ")
 					.appendString(chamber.getInputItem().getDisplayName().getString());
@@ -93,8 +99,6 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 			
 			tooltip.add(inString);
 			tooltip.add(outString);
-			tooltip.add(new StringTextComponent("Active? " + (chamber.isActive() ? "Yes." : "No.")));
-			tooltip.add(new StringTextComponent("Dumping? " + (chamber.isDumping() ? "Yes." : "No.")));
 			tooltip.add(new StringTextComponent(String.format(Locale.US, "%.1f", completed) + "% Completed."));
 			tooltip.add(new StringTextComponent(String.format(Locale.US, "%.1f", remaining) + "% Remaining."));
 			

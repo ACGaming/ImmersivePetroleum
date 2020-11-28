@@ -49,26 +49,30 @@ public class CokerUnitRecipe extends MultiblockRecipe{
 		return false;
 	}
 	
-	public static boolean hasRecipeWithInput(ItemStack stack){
+	public static boolean hasRecipeWithInput(@Nonnull ItemStack stack, boolean ignoreSize){
 		Objects.requireNonNull(stack);
 		
 		if(!stack.isEmpty()){
 			for(CokerUnitRecipe recipe:recipes.values()){
-				if(recipe.inputItem != null && recipe.inputItem.test(stack)){
-					return true;
+				if(recipe.inputItem != null){
+					if((!ignoreSize && recipe.inputItem.test(stack)) || (ignoreSize && recipe.inputItem.testIgnoringSize(stack))){
+						return true;
+					}
 				}
 			}
 		}
 		return false;
 	}
 	
-	public static boolean hasRecipeWithInput(@Nonnull FluidStack fluid){
+	public static boolean hasRecipeWithInput(@Nonnull FluidStack fluid, boolean ignoreAmount){
 		Objects.requireNonNull(fluid);
 		
 		if(!fluid.isEmpty()){
 			for(CokerUnitRecipe recipe:recipes.values()){
-				if(recipe.inputFluid != null && recipe.inputFluid.test(fluid)){
-					return true;
+				if(recipe.inputFluid != null){
+					if((!ignoreAmount && recipe.inputFluid.test(fluid)) || (ignoreAmount && recipe.inputFluid.testIgnoringAmount(fluid))){
+						return true;
+					}
 				}
 			}
 		}

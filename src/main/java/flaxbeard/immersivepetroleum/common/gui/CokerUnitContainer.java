@@ -33,7 +33,7 @@ public class CokerUnitContainer extends IEBaseContainer<CokerUnitTileEntity>{
 						return false;
 					}
 					
-					return CokerUnitRecipe.hasRecipeWithInput(fs);
+					return CokerUnitRecipe.hasRecipeWithInput(fs, true);
 				}).orElse(false);
 			}
 		});
@@ -64,7 +64,7 @@ public class CokerUnitContainer extends IEBaseContainer<CokerUnitTileEntity>{
 		
 		@Override
 		public boolean isItemValid(ItemStack stack){
-			return !stack.isEmpty() && CokerUnitRecipe.hasRecipeWithInput(stack);
+			return !stack.isEmpty() && CokerUnitRecipe.hasRecipeWithInput(stack, true);
 		}
 	}
 }

@@ -85,6 +85,7 @@ import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 
 public class ClientEventHandler{
 	@Deprecated private static Object lastGui = null;
@@ -408,8 +409,19 @@ public class ClientEventHandler{
 						}
 						
 						debugOut.add("Coker Unit");
-						debugOut.add(coker.energyStorage.getEnergyStored() + "/" + coker.energyStorage.getMaxEnergyStored() + "RF");
+						debugOut.add("Power: " + coker.energyStorage.getEnergyStored() + "/" + coker.energyStorage.getMaxEnergyStored() + "RF");
 						
+						{
+							FluidTank tank = coker.bufferTanks[CokerUnitTileEntity.TANK_INPUT];
+							FluidStack fs = tank.getFluid();
+							debugOut.add("In Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")")));
+						}
+						
+						{
+							FluidTank tank = coker.bufferTanks[CokerUnitTileEntity.TANK_OUTPUT];
+							FluidStack fs = tank.getFluid();
+							debugOut.add("Out Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")")));
+						}
 						
 						for(int i = 0;i < coker.chambers.length;i++){
 							CokingChamber chamber = coker.chambers[i];
@@ -419,7 +431,7 @@ public class ClientEventHandler{
 							float completed = 100 * chamber.getCompleted();
 							float remaining = 100 * chamber.getRemaining();
 							
-							debugOut.add("  Items: " + chamber.getTotalAmount() + " of " + chamber.getCapacity());
+							debugOut.add("  Items: " + chamber.getTotalAmount() + " / " + chamber.getCapacity());
 							debugOut.add("  I/O: " + chamber.getInputItem().getDisplayName().getString()+" / " + chamber.getOutputItem().getDisplayName().getString());
 							debugOut.add("  Active? " + (chamber.isActive() ? "Yes." : "No."));
 							debugOut.add("  Dumping? " + (chamber.isDumping() ? "Yes." : "No."));
