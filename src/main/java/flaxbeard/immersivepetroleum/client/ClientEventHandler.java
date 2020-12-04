@@ -67,6 +67,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.vector.Quaternion;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.LanguageMap;
 import net.minecraft.util.text.StringTextComponent;
@@ -369,7 +370,7 @@ public class ClientEventHandler{
 					BlockRayTraceResult result = (BlockRayTraceResult) rt;
 					World world = player.world;
 					
-					List<String> debugOut = new ArrayList<>();
+					List<ITextComponent> debugOut = new ArrayList<>();
 					
 					TileEntity te = world.getTileEntity(result.getPos());
 					if(te instanceof DistillationTowerTileEntity){
@@ -378,28 +379,36 @@ public class ClientEventHandler{
 							tower = tower.master();
 						}
 						
-						debugOut.add("Distillation Tower");
-						debugOut.add(tower.energyStorage.getEnergyStored() + "/" + tower.energyStorage.getMaxEnergyStored() + "RF");
+						debugOut.add(toText("Distillation Tower").mergeStyle(TextFormatting.GOLD)
+								.append(toText(tower.isRSDisabled() ? " (Redstoned)" : "").mergeStyle(TextFormatting.RED))
+								.append(toText(tower.shouldRenderAsActive() ? " (Active)" : "").mergeStyle(TextFormatting.GREEN)));
+						debugOut.add(toText(tower.energyStorage.getEnergyStored() + "/" + tower.energyStorage.getMaxEnergyStored() + "RF"));
 						
 						{
+							debugOut.add(toText("Input Fluid").mergeStyle(TextFormatting.UNDERLINE));
+							
 							MultiFluidTank tank = tower.tanks[DistillationTowerTileEntity.TANK_INPUT];
 							if(tank.fluids.size() > 0){
-								debugOut.add("Input");
 								for(int i = 0;i < tank.fluids.size();i++){
 									FluidStack fstack = tank.fluids.get(i);
-									debugOut.add("  " + fstack.getDisplayName().getString() + " " + fstack.getAmount() + "mB");
+									debugOut.add(toText("  " + fstack.getDisplayName().getString() + " (" + fstack.getAmount() + "mB)"));
 								}
+							}else{
+								debugOut.add(toText("  Empty"));
 							}
 						}
 						
 						{
+							debugOut.add(toText("Output Fluid(s)").mergeStyle(TextFormatting.UNDERLINE));
+							
 							MultiFluidTank tank = tower.tanks[DistillationTowerTileEntity.TANK_OUTPUT];
 							if(tank.fluids.size() > 0){
-								debugOut.add("Output");
 								for(int i = 0;i < tank.fluids.size();i++){
 									FluidStack fstack = tank.fluids.get(i);
-									debugOut.add("  " + fstack.getDisplayName().getString() + " " + fstack.getAmount() + "mB");
+									debugOut.add(toText("  " + fstack.getDisplayName().getString() + " (" + fstack.getAmount() + "mB)"));
 								}
+							}else{
+								debugOut.add(toText("  Empty"));
 							}
 						}
 						
@@ -409,35 +418,41 @@ public class ClientEventHandler{
 							coker = coker.master();
 						}
 						
-						debugOut.add("Coker Unit");
-						debugOut.add("Power: " + coker.energyStorage.getEnergyStored() + "/" + coker.energyStorage.getMaxEnergyStored() + "RF");
+						debugOut.add(toText("Coker Unit ").mergeStyle(TextFormatting.GOLD)
+								.append(toText(coker.isRSDisabled() ? " (Redstoned)" : "").mergeStyle(TextFormatting.RED))
+								.append(toText(coker.shouldRenderAsActive() ? " (Active)" : "").mergeStyle(TextFormatting.GREEN)));
+						debugOut.add(toText(coker.energyStorage.getEnergyStored() + "/" + coker.energyStorage.getMaxEnergyStored() + "RF"));
 						
 						{
 							FluidTank tank = coker.bufferTanks[CokerUnitTileEntity.TANK_INPUT];
 							FluidStack fs = tank.getFluid();
-							debugOut.add("In Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")")));
+							debugOut.add(toText("In Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")"))));
 						}
 						
 						{
 							FluidTank tank = coker.bufferTanks[CokerUnitTileEntity.TANK_OUTPUT];
 							FluidStack fs = tank.getFluid();
-							debugOut.add("Out Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")")));
+							debugOut.add(toText("Out Buffer: " + (fs.getAmount() + "/" + tank.getCapacity() + "mB " + (fs.isEmpty() ? "" : "(" + fs.getDisplayName().getString() + ")"))));
 						}
 						
 						for(int i = 0;i < coker.chambers.length;i++){
 							CokingChamber chamber = coker.chambers[i];
 							
-							debugOut.add("Chamber " + i + ":");
+							debugOut.add(toText("Chamber " + i).mergeStyle(TextFormatting.UNDERLINE, TextFormatting.AQUA));
 							
 							float completed = 100 * chamber.getCompleted();
 							float remaining = 100 * chamber.getRemaining();
 							
-							debugOut.add("  Items: " + chamber.getTotalAmount() + " / " + chamber.getCapacity());
-							debugOut.add("  I/O: " + chamber.getInputItem().getDisplayName().getString() + " / " + chamber.getOutputItem().getDisplayName().getString());
-							debugOut.add("  Active? " + (chamber.isActive() ? "Yes." : "No."));
-							debugOut.add("  Dumping? " + (chamber.isDumping() ? "Yes." : "No."));
-							debugOut.add("  " + MathHelper.floor(completed) + "% Completed. (Raw: " + completed + ")");
-							debugOut.add("  " + MathHelper.floor(remaining) + "% Remaining. (Raw: " + remaining + ")");
+							debugOut.add(toText("  State: ")
+								.append(toText("Active").mergeStyle(chamber.isActive() ? TextFormatting.GREEN : TextFormatting.RED))
+								.appendString(" | ")
+								.append(toText("Dumping").mergeStyle(chamber.isDumping() ? TextFormatting.GREEN : TextFormatting.RED)));
+							
+							debugOut.add(toText("  Items: " + chamber.getTotalAmount() + " / " + chamber.getCapacity()).appendString(" ("+chamber.getInputItem().getDisplayName().getString()+")"));
+							debugOut.add(toText("  Out: " + chamber.getOutputItem().getDisplayName().getString()));
+							
+							debugOut.add(toText("  " + MathHelper.floor(completed) + "% Completed. (Raw: " + completed + ")"));
+							debugOut.add(toText("  " + MathHelper.floor(remaining) + "% Remaining. (Raw: " + remaining + ")"));
 						}
 					}
 					
@@ -445,13 +460,17 @@ public class ClientEventHandler{
 						MatrixStack matrix = event.getMatrixStack();
 						matrix.push();
 						for(int i = 0;i < debugOut.size();i++){
-							ClientUtils.font().drawStringWithShadow(matrix, debugOut.get(i), 1, 1 + (i * ClientUtils.font().FONT_HEIGHT), -1);
+							ClientUtils.font().func_243246_a(matrix, debugOut.get(i), 2, 2 + (i * (ClientUtils.font().FONT_HEIGHT + 2)), -1);
 						}
 						matrix.pop();
 					}
 				}
 			}
 		}
+	}
+	
+	private IFormattableTextComponent toText(String string){
+		return new StringTextComponent(string);
 	}
 	
 	@SubscribeEvent
