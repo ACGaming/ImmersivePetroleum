@@ -22,6 +22,7 @@ public class IPTags{
 	
 	public static class Items{
 		public static final ITag.INamedTag<Item> bitumen=createItemWrapper(forgeLoc("bitumen"));
+		public static final ITag.INamedTag<Item> petCoke = createItemWrapper(forgeLoc("petcoke"));
 	}
 	
 	public static class Fluids{

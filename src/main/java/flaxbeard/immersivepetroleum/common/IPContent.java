@@ -57,6 +57,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Effect;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
@@ -103,6 +104,7 @@ public class IPContent{
 		public static IPItemBase projector;
 		public static IPItemBase speedboat;
 		public static IPItemBase oil_can;
+		public static IPItemBase petcoke;
 	}
 	
 	public static class BoatUpgrades{
@@ -141,6 +143,12 @@ public class IPContent{
 		Items.bitumen = new IPItemBase("bitumen");
 		Items.oil_can = new OilCanItem("oil_can");
 		Items.speedboat = new SpeedboatItem("speedboat");
+		Items.petcoke = new IPItemBase("petcoke"){
+			@Override
+			public int getBurnTime(ItemStack itemStack){
+				return 3200;
+			}
+		};
 		
 		BoatUpgrades.reinforced_hull = new IPUpgradeItem("reinforced_hull", "BOAT");
 		BoatUpgrades.ice_breaker = new IPUpgradeItem("icebreaker", "BOAT");

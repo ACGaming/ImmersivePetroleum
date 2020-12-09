@@ -1,7 +1,7 @@
 {
   "type": "immersivepetroleum:coker",
   "result": {
-    "item": "minecraft:coal_block"
+    "item": "immersivepetroleum:petcoke"
   },
   "resultfluid": {
     "tag": "forge:diesel",
