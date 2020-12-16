@@ -95,11 +95,11 @@ public class IPRecipes extends RecipeProvider{
 			.patternLine("ccc")
 			.patternLine("ccc")
 			.addCriterion("has_petcoke_item", hasItem(IPTags.Items.petcoke))
-			.build(this.out, rl("petcoke_to_block"));
+			.build(this.out, rl("petcoke_items_to_block"));
 		ShapelessRecipeBuilder.shapelessRecipe(IPContent.Items.petcoke, 9)
 			.addIngredient(IPTags.getItemTag(IPTags.Blocks.petcoke))
 			.addCriterion("has_petcoke_block", hasItem(IPTags.getItemTag(IPTags.Blocks.petcoke)))
-			.build(this.out, rl("petcoke_to_items"));
+			.build(this.out, rl("petcoke_block_to_items"));
 		
 		BlastFurnaceFuelBuilder.builder(IPTags.Items.petcoke)
 			.setTime(1200)

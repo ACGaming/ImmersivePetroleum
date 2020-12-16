@@ -2,7 +2,7 @@
   "parent": "minecraft:recipes/root",
   "rewards": {
     "recipes": [
-      "immersivepetroleum:petcoke_to_block"
+      "immersivepetroleum:petcoke_items_to_block"
     ]
   },
   "criteria": {
@@ -19,7 +19,7 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "immersivepetroleum:petcoke_to_block"
+        "recipe": "immersivepetroleum:petcoke_items_to_block"
       }
     }
   },
