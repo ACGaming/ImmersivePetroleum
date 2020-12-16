@@ -11,7 +11,6 @@ import net.minecraft.item.Item;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.ITag;
-import net.minecraft.tags.ITag.INamedTag;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.ResourceLocation;
 
@@ -42,7 +41,7 @@ public class IPTags{
 	}
 	
 	private static ITag.INamedTag<Block> createBlockTag(ResourceLocation name){
-		INamedTag<Block> blockTag = createBlockWrapper(name);
+		ITag.INamedTag<Block> blockTag = createBlockWrapper(name);
 		toItemTag.put(blockTag, createItemWrapper(name));
 		return blockTag;
 	}

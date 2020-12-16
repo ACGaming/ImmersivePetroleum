@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import blusunrize.immersiveengineering.api.IETags;
+import blusunrize.immersiveengineering.api.crafting.IngredientWithSize;
 import blusunrize.immersiveengineering.api.crafting.builders.BlastFurnaceFuelBuilder;
+import blusunrize.immersiveengineering.api.crafting.builders.MixerRecipeBuilder;
 import blusunrize.immersiveengineering.common.blocks.EnumMetals;
 import blusunrize.immersiveengineering.common.blocks.IEBlocks;
 import blusunrize.immersiveengineering.common.items.IEItems;
@@ -33,7 +35,7 @@ import net.minecraftforge.common.Tags;
 import net.minecraftforge.fluids.FluidStack;
 
 public class IPRecipes extends RecipeProvider{
-	private final Map<String, Integer> PATH_COUNT=new HashMap<>();
+	private final Map<String, Integer> PATH_COUNT = new HashMap<>();
 	
 	protected Consumer<IFinishedRecipe> out;
 	public IPRecipes(DataGenerator generatorIn){
@@ -42,7 +44,7 @@ public class IPRecipes extends RecipeProvider{
 	
 	@Override
 	protected void registerRecipes(Consumer<IFinishedRecipe> out){
-		this.out=out;
+		this.out = out;
 		
 		itemRecipes();
 		blockRecipes();
@@ -50,6 +52,12 @@ public class IPRecipes extends RecipeProvider{
 		distillationRecipes();
 		cokerRecipes();
 		reservoirs();
+		
+		MixerRecipeBuilder.builder(IPContent.Fluids.napalm, 500)
+			.addFluidTag(IPTags.Fluids.gasoline, 500)
+			.addInput(new IngredientWithSize(IETags.getTagsFor(EnumMetals.ALUMINUM).dust, 3))
+			.setEnergy(3200)
+			.build(this.out, rl("mixer/napalm"));
 	}
 	
 	private void reservoirs(){
@@ -59,18 +67,18 @@ public class IPRecipes extends RecipeProvider{
 			.max(10000.000)
 			.trace(0.006)
 			.weight(30)
-			.addDimensions(false, DimensionType.OVERWORLD.getRegistryName()) // false = Whitelist, true = blacklist
-//			.addDimensions(true, DimensionType.OVERWORLD.func_240901_a_()) // Will crash the generator, only one or the other but not both at the same time
+			.addDimensions(false, DimensionType.OVERWORLD.getLocation()) // false = Whitelist, true = blacklist
+//			.addDimensions(true, DimensionType.OVERWORLD.getRegistryName()) // Will crash the generator, only one or the other but not both at the same time
 //			.addBiomes(false, new ResourceLocation[]{}) // Just for demonstration purposes.
 			.build(this.out, rl("reservoirs/aquifer"));
 		
 		// Shorthand for the above. (name   fluid                      min       max        trace  weight)
 		ReservoirTypeBuilder.builder("oil", IPContent.Fluids.crudeOil, 2500.000, 15000.000, 0.006, 40)
-			.addDimensions(true, DimensionType.THE_END.getRegistryName()) // false = Whitelist, true = blacklist
+			.addDimensions(true, DimensionType.THE_END.getLocation()) // false = Whitelist, true = blacklist
 			.build(this.out, rl("reservoirs/oil"));
 		
 		ReservoirTypeBuilder.builder("lava", Fluids.LAVA, 250.000, 1000.000, 0.0, 30)
-			.addDimensions(true, DimensionType.THE_END.getRegistryName()) // false = Whitelist, true = blacklist
+			.addDimensions(true, DimensionType.THE_END.getLocation()) // false = Whitelist, true = blacklist
 			.build(this.out, rl("reservoirs/lava"));
 	}
 	
@@ -84,7 +92,6 @@ public class IPRecipes extends RecipeProvider{
 			.addByproduct(new ItemStack(IPContent.Items.bitumen), 0.07)
 			.addInput(IPTags.Fluids.crudeOil, 75)
 			.setEnergy(2048)
-			.setTime(1)
 			.build(this.out, rl("distillationtower/oilcracking"));
 	}
 	
@@ -209,6 +216,19 @@ public class IPRecipes extends RecipeProvider{
 			.addCriterion("has_treated_planks", hasItem(IETags.getItemTag(IETags.treatedWood)))
 			.addCriterion("has_"+toPath(IEBlocks.MetalDevices.fluidPipe), hasItem(IEBlocks.MetalDevices.fluidPipe))
 			.build(this.out, rl("auto_lubricator"));
+		
+		ShapedRecipeBuilder.shapedRecipe(Blocks.flarestack)
+			.key('I', IETags.getTagsFor(EnumMetals.IRON).plate)
+			.key('C', IEItems.Ingredients.componentSteel)
+			.key('P', IEBlocks.MetalDevices.fluidPipe)
+			.key('A', IEBlocks.MetalDevices.fluidPlacer)
+			.key('F', Items.FIRE_CHARGE)
+			.patternLine("IFI")
+			.patternLine("CAC")
+			.patternLine("IPI")
+			.addCriterion("has_bitumen", hasItem(IPContent.Items.bitumen))
+			.addCriterion("has_"+toPath(IEBlocks.MetalDevices.fluidPipe), hasItem(IEBlocks.MetalDevices.fluidPipe))
+			.build(this.out, rl("flarestack"));
 	}
 	
 	private void itemRecipes(){
@@ -249,9 +269,9 @@ public class IPRecipes extends RecipeProvider{
 	
 	private ResourceLocation rl(String str){
 		if(PATH_COUNT.containsKey(str)){
-			int count=PATH_COUNT.get(str)+1;
+			int count = PATH_COUNT.get(str) + 1;
 			PATH_COUNT.put(str, count);
-			return new ResourceLocation(ImmersivePetroleum.MODID, str+count);
+			return new ResourceLocation(ImmersivePetroleum.MODID, str + count);
 		}
 		PATH_COUNT.put(str, 1);
 		return new ResourceLocation(ImmersivePetroleum.MODID, str);

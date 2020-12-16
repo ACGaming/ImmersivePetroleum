@@ -15,8 +15,10 @@ public class BlockRenderLayers{
 	
 	@SubscribeEvent
 	public static void clientSetup(FMLClientSetupEvent event){
-		RenderTypeLookup.setRenderLayer(IPContent.Blocks.auto_lubricator, t->t==RenderType.getTranslucent());
-		RenderTypeLookup.setRenderLayer(IPContent.Blocks.gas_generator, BlockRenderLayers::gasLayer);
+		RenderTypeLookup.setRenderLayer(IPContent.Blocks.auto_lubricator, BlockRenderLayers::lubeLayer);
+		RenderTypeLookup.setRenderLayer(IPContent.Blocks.gas_generator, BlockRenderLayers::solidCutout);
+		RenderTypeLookup.setRenderLayer(IPContent.Blocks.flarestack, BlockRenderLayers::stackLayer);
+		
 		RenderTypeLookup.setRenderLayer(IPContent.Blocks.dummyConveyor, RenderType.getCutout());
 		RenderTypeLookup.setRenderLayer(IPContent.Blocks.dummyOilOre, RenderType.getCutout());
 		RenderTypeLookup.setRenderLayer(IPContent.Blocks.dummyPipe, RenderType.getCutout());
@@ -39,10 +41,14 @@ public class BlockRenderLayers{
 	}
 	
 	public static boolean lubeLayer(RenderType t){
-		return t==RenderType.getTranslucent();
+		return t == RenderType.getTranslucent();
 	}
 	
-	public static boolean gasLayer(RenderType t){
-		return t==RenderType.getSolid() || t==RenderType.getCutout();
+	public static boolean stackLayer(RenderType t){
+		return t == RenderType.getCutout();
+	}
+	
+	public static boolean solidCutout(RenderType t){
+		return t == RenderType.getSolid() || t == RenderType.getCutout();
 	}
 }
