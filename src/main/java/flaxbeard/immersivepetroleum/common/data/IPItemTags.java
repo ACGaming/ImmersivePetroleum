@@ -18,7 +18,7 @@ public class IPItemTags extends ItemTagsProvider{
 		getOrCreateBuilder(IPTags.Items.bitumen)
 			.add(IPContent.Items.bitumen);
 		
-		getOrCreateBuilder(IPTags.Items.petCoke)
+		getOrCreateBuilder(IPTags.Items.petcoke)
 			.add(IPContent.Items.petcoke);
 	}
 }

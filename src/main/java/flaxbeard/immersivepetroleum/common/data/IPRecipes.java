@@ -21,6 +21,7 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.data.IFinishedRecipe;
 import net.minecraft.data.RecipeProvider;
 import net.minecraft.data.ShapedRecipeBuilder;
+import net.minecraft.data.ShapelessRecipeBuilder;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -88,11 +89,25 @@ public class IPRecipes extends RecipeProvider{
 	}
 	
 	private void cokerRecipes(){
-		BlastFurnaceFuelBuilder.builder(IPTags.Items.petCoke)
-			.setTime(1200)
-			.build(this.out, rl("blastfurnace/fuel_pet_coke"));
+		ShapedRecipeBuilder.shapedRecipe(IPContent.Blocks.petcoke)
+			.key('c', IPTags.Items.petcoke)
+			.patternLine("ccc")
+			.patternLine("ccc")
+			.patternLine("ccc")
+			.addCriterion("has_petcoke_item", hasItem(IPTags.Items.petcoke))
+			.build(this.out, rl("petcoke_to_block"));
+		ShapelessRecipeBuilder.shapelessRecipe(IPContent.Items.petcoke, 9)
+			.addIngredient(IPTags.getItemTag(IPTags.Blocks.petcoke))
+			.addCriterion("has_petcoke_block", hasItem(IPTags.getItemTag(IPTags.Blocks.petcoke)))
+			.build(this.out, rl("petcoke_to_items"));
 		
-		// TODO Replace petcoke with "Petcoke Chunk" once it exists
+		BlastFurnaceFuelBuilder.builder(IPTags.Items.petcoke)
+			.setTime(1200)
+			.build(this.out, rl("blastfurnace/fuel_petcoke"));
+		BlastFurnaceFuelBuilder.builder(IPTags.getItemTag(IPTags.Blocks.petcoke))
+			.setTime(12000)
+			.build(this.out, rl("blastfurnace/fuel_petcoke_block"));
+		
 		CokerUnitRecipeBuilder.builder(new ItemStack(IPContent.Items.petcoke), IPTags.Fluids.diesel, 5)
 			.addInputItem(IPTags.Items.bitumen, 1)
 			.addInputFluid(FluidTags.WATER, 125)

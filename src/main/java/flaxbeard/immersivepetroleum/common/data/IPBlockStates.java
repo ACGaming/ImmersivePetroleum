@@ -84,6 +84,7 @@ public class IPBlockStates extends BlockStateProvider{
 		
 		// "Normal" Blocks
 		simpleBlockWithItem(IPContent.Blocks.asphalt);
+		simpleBlockWithItem(IPContent.Blocks.petcoke);
 		gasGenerator();
 		
 		autolubricator();

@@ -1,8 +1,9 @@
 package flaxbeard.immersivepetroleum.api;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.common.base.Preconditions;
 
 import net.minecraft.block.Block;
 import net.minecraft.fluid.Fluid;
@@ -15,14 +16,16 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.util.ResourceLocation;
 
 public class IPTags{
+	private static final Map<ITag.INamedTag<Block>, ITag.INamedTag<Item>> toItemTag = new HashMap<>();
 	
 	public static class Blocks{
-		public static final ITag.INamedTag<Block> asphalt=createBlockWrapper(forgeLoc("asphalt"));
+		public static final ITag.INamedTag<Block> asphalt = createBlockWrapper(forgeLoc("asphalt"));
+		public static final ITag.INamedTag<Block> petcoke = createBlockTag(forgeLoc("storage_blocks/petcoke"));
 	}
 	
 	public static class Items{
-		public static final ITag.INamedTag<Item> bitumen=createItemWrapper(forgeLoc("bitumen"));
-		public static final ITag.INamedTag<Item> petCoke = createItemWrapper(forgeLoc("petcoke"));
+		public static final ITag.INamedTag<Item> bitumen = createItemWrapper(forgeLoc("bitumen"));
+		public static final ITag.INamedTag<Item> petcoke = createItemWrapper(forgeLoc("coal_petcoke"));
 	}
 	
 	public static class Fluids{
@@ -33,25 +36,27 @@ public class IPTags{
 		public static final ITag.INamedTag<Fluid> napalm = createFluidWrapper(forgeLoc("napalm"));
 	}
 	
-	private static ITag.INamedTag<Item> createItemWrapper(ResourceLocation name){
-		return createGenericWrapper(ItemTags.getAllTags(), name, ItemTags::makeWrapperTag);
+	public static ITag.INamedTag<Item> getItemTag(ITag.INamedTag<Block> blockTag){
+		Preconditions.checkArgument(toItemTag.containsKey(blockTag));
+		return toItemTag.get(blockTag);
+	}
+	
+	private static ITag.INamedTag<Block> createBlockTag(ResourceLocation name){
+		INamedTag<Block> blockTag = createBlockWrapper(name);
+		toItemTag.put(blockTag, createItemWrapper(name));
+		return blockTag;
 	}
 	
 	private static ITag.INamedTag<Block> createBlockWrapper(ResourceLocation name){
-		return createGenericWrapper(BlockTags.getAllTags(), name, BlockTags::makeWrapperTag);
+		return BlockTags.makeWrapperTag(name.toString());
+	}
+	
+	private static ITag.INamedTag<Item> createItemWrapper(ResourceLocation name){
+		return ItemTags.makeWrapperTag(name.toString());
 	}
 	
 	private static ITag.INamedTag<Fluid> createFluidWrapper(ResourceLocation name){
-		return createGenericWrapper(FluidTags.getAllTags(), name, FluidTags::makeWrapperTag);
-	}
-	
-	private static <T> INamedTag<T> createGenericWrapper(List<? extends INamedTag<T>> tags, ResourceLocation name, Function<String, INamedTag<T>> createNew){
-		Optional<? extends INamedTag<T>> existing = tags.stream().filter(tag -> tag.getName().equals(name)).findAny();
-		if(existing.isPresent()){
-			return existing.get();
-		}else{
-			return createNew.apply(name.toString());
-		}
+		return FluidTags.makeWrapperTag(name.toString());
 	}
 	
 	private static ResourceLocation forgeLoc(String path){

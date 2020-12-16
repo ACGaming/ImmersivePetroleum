@@ -200,7 +200,7 @@ public class DebugItem extends IPItemBase{
 		TileEntity te=context.getWorld().getTileEntity(context.getPos());
 		switch(mode){
 			case GENERAL_TEST:{
-				if(context.getWorld().isRemote){
+				if(!context.getWorld().isRemote){
 					CokerUnitTileEntity.CokingChamber chamber = new CokerUnitTileEntity.CokingChamber(64, 8000);
 					
 					ItemStack refStack = new ItemStack(IPContent.Items.bitumen, 64);

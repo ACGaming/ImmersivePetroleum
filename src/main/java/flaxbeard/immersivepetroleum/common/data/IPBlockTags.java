@@ -16,5 +16,8 @@ public class IPBlockTags extends BlockTagsProvider{
 	protected void registerTags(){
 		getOrCreateBuilder(IPTags.Blocks.asphalt)
 			.add(IPContent.Blocks.asphalt);
+		
+		getOrCreateBuilder(IPTags.Blocks.petcoke)
+			.add(IPContent.Blocks.petcoke);
 	}
 }

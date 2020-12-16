@@ -11,12 +11,10 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.ImmutableSet;
 
-import blusunrize.immersiveengineering.api.DirectionalBlockPos;
 import blusunrize.immersiveengineering.api.utils.shapes.CachedShapesWithTransform;
 import blusunrize.immersiveengineering.common.blocks.IEBlockInterfaces.IBlockBounds;
 import blusunrize.immersiveengineering.common.blocks.IEBlockInterfaces.IInteractionObjectIE;
 import blusunrize.immersiveengineering.common.blocks.generic.PoweredMultiblockTileEntity;
-import blusunrize.immersiveengineering.common.util.CapabilityReference;
 import blusunrize.immersiveengineering.common.util.Utils;
 import blusunrize.immersiveengineering.common.util.inventory.IEInventoryHandler;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
@@ -83,11 +81,11 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	/** Coker Chamber B<br> */
 	public static final int CHAMBER_B = 1;
 	
-	/** Template-Location of the Item Input Port for Chaining. (0 1 2)<br> */
-	public static final BlockPos Chaining_IN = new BlockPos(0, 1, 2);
+	/** Template-Location of the Chamber A Item Output */
+	public static final BlockPos Chamber_A_OUT = new BlockPos(2, 2, 2);
 	
-	/** Template-Location of the Item Output Port for Chaining. (8 1 2)<br>Serves as the normal Item Output aswell.<br> */
-	public static final BlockPos Chaining_OUT = new BlockPos(8, 1, 2);
+	/** Template-Location of the Chamber B Item Output */
+	public static final BlockPos Chamber_B_OUT = new BlockPos(6, 2, 2);
 	
 	/** Template-Location of the Fluid Input Port. (6 0 0)<br> */
 	public static final BlockPos Fluid_IN = new BlockPos(6, 0, 0);
@@ -98,10 +96,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	/** Template-Location of the Item Input Port. (4 0 0)<br> */
 	public static final BlockPos Item_IN = new BlockPos(4, 0, 0);
 	
-	/**
-	 * Template-Location of the Energy Input Ports.<br>
-	 * <pre>1 1 0<br>2 1 0<br>3 1 0</pre><br>
-	 */
+	/** Template-Location of the Energy Input Ports.<br><pre>1 1 0<br>2 1 0<br>3 1 0</pre><br> */
 	public static final Set<BlockPos> Energy_IN = ImmutableSet.of(new BlockPos(1, 1, 0), new BlockPos(2, 1, 0), new BlockPos(3, 1, 0));
 	
 	/** Template-Location of the Redstone Input Port. (6 1 4)<br> */
@@ -111,7 +106,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	public final FluidTank[] bufferTanks = {new FluidTank(16000), new FluidTank(16000)};
 	public final CokingChamber[] chambers = {new CokingChamber(64, 8000), new CokingChamber(64, 8000)};
 	public CokerUnitTileEntity(){
-		super(CokerUnitMultiblock.INSTANCE, 16000, true, null);
+		super(CokerUnitMultiblock.INSTANCE, 24000, true, null);
 	}
 	
 	@Override
@@ -210,22 +205,24 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		return false;
 	}
 	
-	/** Output Capability Reference */
-	private CapabilityReference<IItemHandler> output_capref = CapabilityReference.forTileEntity(this,
-			() -> CokerUnitTileEntity.sup(this),
-			CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
-	
-	private static DirectionalBlockPos sup(CokerUnitTileEntity te){
-		Direction outputdir = (te.getIsMirrored() ? te.getFacing().rotateY() : te.getFacing().rotateYCCW());
-		return new DirectionalBlockPos(te.getBlockPosForPos(Chaining_OUT).offset(outputdir), outputdir);
-	}
+//	/** Output Capability Reference */
+//	private CapabilityReference<IItemHandler> output_capref = CapabilityReference.forTileEntity(this,
+//			() -> CokerUnitTileEntity.sup(this),
+//			CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
+//	
+//	private static DirectionalBlockPos sup(CokerUnitTileEntity te){
+//		Direction outputdir = (te.getIsMirrored() ? te.getFacing().rotateY() : te.getFacing().rotateYCCW());
+//		return new DirectionalBlockPos(te.getBlockPosForPos(Chamber_A_OUT).offset(outputdir), outputdir);
+//	}
 	
 	@Override
 	public void doProcessOutput(ItemStack output){
-		output = Utils.insertStackIntoInventory(this.output_capref, output, false);
-		if(!output.isEmpty()){
-			
-		}
+		// TODO Handled completely by the Tick stuff.
+		
+//		output = Utils.insertStackIntoInventory(this.output_capref, output, false);
+//		if(!output.isEmpty()){
+//			
+//		}
 	}
 	
 	private LazyOptional<IItemHandler> insertionHandler = registerConstantCap(
@@ -541,6 +538,11 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			this.recipe = recipe;
 		}
 		
+		/** Marks this chamber as done and starts the dumping process */
+		public void markForDump(){
+			this.dumping = true;
+		}
+		
 		public int addStack(@Nonnull ItemStack stack, boolean simulate){
 			if(!stack.isEmpty()){
 				if(this.recipe != null && this.recipe.inputItem.test(stack)){
@@ -565,48 +567,6 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			return 0;
 		}
 		
-		/** Marks this chamber as done and starts the dumping process */
-		public void markForDump(){
-			this.dumping = true;
-		}
-		
-		/** Get the next stack. Returns {@link ItemStack#EMPTY} once the chamber is empty */
-		public ItemStack next(boolean peek){
-			if(this.dumping && this.outputAmount > 0){
-				ItemStack stack = getInputItem().copy();
-				stack.setCount(this.outputAmount >= 64 ? 64 : this.outputAmount);
-				
-				if(!peek){
-					this.outputAmount -= stack.getCount();
-				}
-				
-				return stack;
-			}
-			
-			return ItemStack.EMPTY;
-		}
-		
-		/**
-		 * Pulls the Requested amount of Items out of the Chamber.
-		 * 
-		 * @param amount
-		 * @return Stack with size <= <i>amount</i>, or {@link ItemStack#EMPTY} if chamber has been emptied out.
-		 */
-		public ItemStack pull(int amount){
-			if(this.dumping && this.outputAmount > 0){
-				int count = this.outputAmount >= 64 ? 64 : this.outputAmount;
-				
-				ItemStack stack = getInputItem().copy();
-				stack.setCount(count);
-				
-				this.outputAmount -= count;
-				
-				return stack;
-			}
-			
-			return ItemStack.EMPTY;
-		}
-		
 		int timer = 0;
 		public boolean tick(CokerUnitTileEntity cokerunit){
 			if(this.recipe == null){
@@ -614,8 +574,6 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			}
 			
 			if(!this.dumping){
-				// TODO Coking Process
-				
 				if(!getInputItem().isEmpty() && this.inputAmount > 0 && !this.tank.isEmpty()){
 					if(cokerunit.energyStorage.getEnergyStored() >= this.recipe.getTotalProcessEnergy()){
 						cokerunit.energyStorage.extractEnergy(this.recipe.getTotalProcessEnergy(), false);
@@ -641,6 +599,25 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 				// TODO Dumping Process
 				// Dumping should not cost energy, because gravity is a thing too..
 				
+				this.timer++;
+				if(this.timer >= 10){
+					this.timer = 0;
+					
+					if(this.outputAmount > 0){
+						// TODO Temporary
+						
+						int amount = Math.min(this.outputAmount, 3);
+						ItemStack copy = this.recipe.outputItem.copy();
+						copy.setCount(amount);
+						
+						this.outputAmount -= amount;
+						
+					}else{
+						this.dumping = false;
+					}
+					
+					return true;
+				}
 			}
 			
 			return false;
@@ -726,12 +703,12 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			return this.recipe;
 		}
 		
-		/** Expected input. For displaying purposes. <b>Do not alter in any way.</b> */
+		/** Expected input.</b> */
 		public ItemStack getInputItem(){
 			if(this.recipe == null){
 				return ItemStack.EMPTY;
 			}
-			return this.recipe.inputItem.getMatchingStacks()[0];
+			return this.recipe.inputItem.getMatchingStacks()[0].copy();
 		}
 		
 		/** Expected output. For displaying purposes. <b>Do not alter in any way.</b> */
