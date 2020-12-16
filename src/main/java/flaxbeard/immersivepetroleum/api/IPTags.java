@@ -2,6 +2,8 @@ package flaxbeard.immersivepetroleum.api;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 
 import com.google.common.base.Preconditions;
 
@@ -12,6 +14,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.ITag;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.ITag.INamedTag;
 import net.minecraft.util.ResourceLocation;
 
 public class IPTags{
@@ -25,6 +28,7 @@ public class IPTags{
 	public static class Items{
 		public static final ITag.INamedTag<Item> bitumen = createItemWrapper(forgeLoc("bitumen"));
 		public static final ITag.INamedTag<Item> petcoke = createItemWrapper(forgeLoc("coal_petcoke"));
+		public static final ITag.INamedTag<Item> petcokeStorage = createItemWrapper(forgeLoc("storage_blocks/coal_petcoke"));
 	}
 	
 	public static class Fluids{
@@ -44,6 +48,11 @@ public class IPTags{
 		ITag.INamedTag<Block> blockTag = createBlockWrapper(name);
 		toItemTag.put(blockTag, createItemWrapper(name));
 		return blockTag;
+	}
+	
+	public static void forAllBlocktags(BiConsumer<INamedTag<Block>, INamedTag<Item>> out){
+		for(Entry<INamedTag<Block>, INamedTag<Item>> entry:toItemTag.entrySet())
+			out.accept(entry.getKey(), entry.getValue());
 	}
 	
 	private static ITag.INamedTag<Block> createBlockWrapper(ResourceLocation name){
