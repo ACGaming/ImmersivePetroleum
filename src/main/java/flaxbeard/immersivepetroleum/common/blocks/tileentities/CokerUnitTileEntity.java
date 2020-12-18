@@ -1,5 +1,6 @@
 package flaxbeard.immersivepetroleum.common.blocks.tileentities;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -488,13 +489,54 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	}
 	
 	private static CachedShapesWithTransform<BlockPos, Pair<Direction, Boolean>> SHAPES = CachedShapesWithTransform.createForMultiblock(CokerUnitTileEntity::getShape);
-	
+	public static boolean updateShapes = false;
 	@Override
 	public VoxelShape getBlockBounds(ISelectionContext ctx){
+		if(updateShapes){
+			updateShapes = false;
+			SHAPES = CachedShapesWithTransform.createForMultiblock(CokerUnitTileEntity::getShape);
+		}
+		
 		return SHAPES.get(this.posInMultiblock, Pair.of(getFacing(), getIsMirrored()));
 	}
 	
 	private static List<AxisAlignedBB> getShape(BlockPos posInMultiblock){
+		int bX = posInMultiblock.getX();
+		int bY = posInMultiblock.getY();
+		int bZ = posInMultiblock.getZ();
+		
+		if(bY == 3 || bY == 4 || bY == 6 || bY == 8 || bY == 9 || bY == 11){
+			if(bX == 0 && bZ == 0){
+				return Arrays.asList(new AxisAlignedBB(0.125, 0.0, 0.125, 0.375, 1.0, 0.375));
+			}
+			if(bX == 0 && bZ == 4){
+				return Arrays.asList(new AxisAlignedBB(0.125, 0.0, 0.625, 0.375, 1.0, 0.875));
+			}
+			if(bX == 8 && bZ == 0){
+				return Arrays.asList(new AxisAlignedBB(0.625, 0.0, 0.125, 0.875, 1.0, 0.375));
+			}
+			if(bX == 8 && bZ == 4){
+				return Arrays.asList(new AxisAlignedBB(0.625, 0.0, 0.625, 0.875, 1.0, 0.875));
+			}
+		}
+		
+		// Top-Half Block Spots
+		if(bY == 0){
+			if((bZ == 1 || bZ == 3) || ((bX == 5 || bX == 7) && bZ == 0) || ((bX == 1 || bX == 5 || bX == 7) && bZ == 4)){
+				return Arrays.asList(new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 0.5, 1.0));
+			}
+		}else if(bY == 7){
+			List<AxisAlignedBB> list = new ArrayList<>();
+			
+			if((bX < 1 && bX > 3) && (bZ < 1 && bZ > 3)){
+				list.add(new AxisAlignedBB(0.0, 0.5, 0.0, 1.0, 1.0, 1.0));
+			}
+			
+			//return list;
+		}else if(bY == 12){
+			
+		}
+		
 		return Arrays.asList(new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0));
 	}
 	
