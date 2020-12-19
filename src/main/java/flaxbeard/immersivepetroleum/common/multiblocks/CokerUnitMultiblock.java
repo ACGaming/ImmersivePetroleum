@@ -14,7 +14,7 @@ public class CokerUnitMultiblock extends IETemplateMultiblock{
 	
 	public CokerUnitMultiblock(){
 		super(new ResourceLocation(ImmersivePetroleum.MODID, "multiblocks/cokerunit"),
-				new BlockPos(4, 0, 2), new BlockPos(4, 1, 4),
+				new BlockPos(4, 0, 2), new BlockPos(4, 1, 4), new BlockPos(9, 23, 5),
 				() -> IPContent.Multiblock.cokerunit.getDefaultState());
 	}
 	
