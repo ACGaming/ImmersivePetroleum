@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import blusunrize.immersiveengineering.api.IETags;
 import blusunrize.immersiveengineering.api.crafting.IngredientWithSize;
+import blusunrize.immersiveengineering.api.crafting.builders.BlastFurnaceFuelBuilder;
 import blusunrize.immersiveengineering.api.crafting.builders.MixerRecipeBuilder;
 import blusunrize.immersiveengineering.common.blocks.EnumMetals;
 import blusunrize.immersiveengineering.common.blocks.IEBlocks;
@@ -13,6 +14,7 @@ import blusunrize.immersiveengineering.common.crafting.fluidaware.IngredientFlui
 import blusunrize.immersiveengineering.common.items.IEItems;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.IPTags;
+import flaxbeard.immersivepetroleum.api.crafting.builders.CokerUnitRecipeBuilder;
 import flaxbeard.immersivepetroleum.api.crafting.builders.DistillationRecipeBuilder;
 import flaxbeard.immersivepetroleum.api.crafting.builders.ReservoirTypeBuilder;
 import flaxbeard.immersivepetroleum.common.IPContent;
@@ -22,6 +24,7 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.data.IFinishedRecipe;
 import net.minecraft.data.RecipeProvider;
 import net.minecraft.data.ShapedRecipeBuilder;
+import net.minecraft.data.ShapelessRecipeBuilder;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -49,6 +52,7 @@ public class IPRecipes extends RecipeProvider{
 		blockRecipes();
 		speedboatUpgradeRecipes();
 		distillationRecipes();
+		cokerRecipes();
 		reservoirs();
 		
 		MixerRecipeBuilder.builder(IPContent.Fluids.napalm, 500)
@@ -91,6 +95,32 @@ public class IPRecipes extends RecipeProvider{
 			.addInput(IPTags.Fluids.crudeOil, 75)
 			.setEnergy(2048)
 			.build(this.out, rl("distillationtower/oilcracking"));
+	}
+	
+	private void cokerRecipes(){
+		ShapedRecipeBuilder.shapedRecipe(IPContent.Blocks.petcoke)
+			.key('c', IPTags.Items.petcoke)
+			.patternLine("ccc")
+			.patternLine("ccc")
+			.patternLine("ccc")
+			.addCriterion("has_petcoke_item", hasItem(IPTags.Items.petcoke))
+			.build(this.out, rl("petcoke_items_to_block"));
+		ShapelessRecipeBuilder.shapelessRecipe(IPContent.Items.petcoke, 9)
+			.addIngredient(IPTags.getItemTag(IPTags.Blocks.petcoke))
+			.addCriterion("has_petcoke_block", hasItem(IPTags.getItemTag(IPTags.Blocks.petcoke)))
+			.build(this.out, rl("petcoke_block_to_items"));
+		
+		BlastFurnaceFuelBuilder.builder(IPTags.Items.petcoke)
+			.setTime(1200)
+			.build(this.out, rl("blastfurnace/fuel_petcoke"));
+		BlastFurnaceFuelBuilder.builder(IPTags.getItemTag(IPTags.Blocks.petcoke))
+			.setTime(12000)
+			.build(this.out, rl("blastfurnace/fuel_petcoke_block"));
+		
+		CokerUnitRecipeBuilder.builder(new ItemStack(IPContent.Items.petcoke), IPTags.Fluids.diesel, 5)
+			.addInputItem(IPTags.Items.bitumen, 1)
+			.addInputFluid(FluidTags.WATER, 125)
+			.build(this.out, rl("coking/petcoke"));
 	}
 	
 	private void speedboatUpgradeRecipes(){

@@ -11,7 +11,7 @@ import blusunrize.immersiveengineering.api.crafting.IERecipeSerializer;
 import blusunrize.immersiveengineering.api.crafting.IngredientWithSize;
 import blusunrize.immersiveengineering.api.crafting.MultiblockRecipe;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
-import flaxbeard.immersivepetroleum.common.IPConfig;
+import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.crafting.Serializers;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipeType;
@@ -101,8 +101,8 @@ public class CokerUnitRecipe extends MultiblockRecipe{
 		this.outputFluid = outputFluid;
 		this.outputItem = outputItem;
 		
-		this.totalProcessEnergy = (int) Math.floor(energy * IPConfig.REFINING.cokerUnit_energyModifier.get());
-		this.totalProcessTime = (int) Math.floor(1 * IPConfig.REFINING.cokerUnit_timeModifier.get());
+		this.totalProcessEnergy = (int) Math.floor(energy * IPServerConfig.REFINING.cokerUnit_energyModifier.get());
+		this.totalProcessTime = (int) Math.floor(1 * IPServerConfig.REFINING.cokerUnit_timeModifier.get());
 	}
 	
 	@Override
