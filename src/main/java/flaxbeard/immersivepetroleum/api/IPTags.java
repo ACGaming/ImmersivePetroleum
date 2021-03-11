@@ -7,6 +7,7 @@ import java.util.function.BiConsumer;
 
 import com.google.common.base.Preconditions;
 
+import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import net.minecraft.block.Block;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
@@ -39,6 +40,10 @@ public class IPTags{
 		public static final ITag.INamedTag<Fluid> napalm = createFluidWrapper(forgeLoc("napalm"));
 	}
 	
+	public static class Utility{
+		public static final ITag.INamedTag<Fluid> burnableInFlarestack = createFluidWrapper(modLoc("burnable_in_flarestack"));
+	}
+	
 	public static ITag.INamedTag<Item> getItemTag(ITag.INamedTag<Block> blockTag){
 		Preconditions.checkArgument(toItemTag.containsKey(blockTag));
 		return toItemTag.get(blockTag);
@@ -69,5 +74,9 @@ public class IPTags{
 	
 	private static ResourceLocation forgeLoc(String path){
 		return new ResourceLocation("forge", path);
+	}
+	
+	private static ResourceLocation modLoc(String path){
+		return new ResourceLocation(ImmersivePetroleum.MODID, path);
 	}
 }

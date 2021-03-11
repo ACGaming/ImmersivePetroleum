@@ -15,12 +15,12 @@ import blusunrize.immersiveengineering.api.energy.DieselHandler;
 import blusunrize.immersiveengineering.api.multiblocks.MultiblockHandler;
 import blusunrize.immersiveengineering.api.tool.ChemthrowerHandler;
 import blusunrize.immersiveengineering.api.tool.ChemthrowerHandler.ChemthrowerEffect_Potion;
-import blusunrize.immersiveengineering.common.IEContent;
 import blusunrize.immersiveengineering.common.blocks.metal.CrusherTileEntity;
 import blusunrize.immersiveengineering.common.blocks.metal.ExcavatorTileEntity;
 import blusunrize.immersiveengineering.common.util.IEPotions;
 import flaxbeard.immersivepetroleum.ImmersivePetroleum;
 import flaxbeard.immersivepetroleum.api.IPTags;
+import flaxbeard.immersivepetroleum.api.crafting.FlarestackHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricantHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler;
 import flaxbeard.immersivepetroleum.api.crafting.LubricatedHandler.LubricantEffect;
@@ -40,6 +40,8 @@ import flaxbeard.immersivepetroleum.common.blocks.tileentities.DistillationTower
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.FlarestackTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.GasGeneratorTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.PumpjackTileEntity;
+import flaxbeard.immersivepetroleum.common.cfg.ConfigUtils;
+import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.entity.SpeedboatEntity;
 import flaxbeard.immersivepetroleum.common.items.DebugItem;
 import flaxbeard.immersivepetroleum.common.items.IPItemBase;
@@ -201,13 +203,15 @@ public class IPContent{
 		MultiblockHandler.registerMultiblock(PumpjackMultiblock.INSTANCE);
 		MultiblockHandler.registerMultiblock(CokerUnitMultiblock.INSTANCE);
 		
-		IPConfig.Utils.addFuel(IPConfig.GENERATION.fuels.get());
-		IPConfig.Utils.addBoatFuel(IPConfig.MISCELLANEOUS.boat_fuels.get());
+		ConfigUtils.addFuel(IPServerConfig.GENERATION.fuels.get());
+		ConfigUtils.addBoatFuel(IPServerConfig.MISCELLANEOUS.boat_fuels.get());
 		
 		DieselHandler.registerFuel(IPTags.Fluids.diesel, 150);
 		
-		LubricantHandler.registerLubricant(Fluids.lubricant, 3);
-		LubricantHandler.registerLubricant(IEContent.fluidPlantoil, 12);
+		LubricantHandler.register(IPTags.Fluids.lubricant, 3);
+		LubricantHandler.register(IETags.fluidPlantoil, 12);
+		
+		FlarestackHandler.register(IPTags.Utility.burnableInFlarestack);
 		
 		LubricatedHandler.registerLubricatedTile(PumpjackTileEntity.class, PumpjackLubricationHandler::new);
 		LubricatedHandler.registerLubricatedTile(ExcavatorTileEntity.class, ExcavatorLubricationHandler::new);

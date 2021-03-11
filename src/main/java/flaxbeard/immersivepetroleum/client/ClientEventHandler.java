@@ -166,7 +166,7 @@ public class ClientEventHandler{
 		Minecraft mc = Minecraft.getInstance();
 		
 		/*
-		if(IPConfig.MISCELLANEOUS.sample_displayBorder.get() && mc.player != null){
+		if(IPClientConfig.MISCELLANEOUS.sample_displayBorder.get() && mc.player != null){
 			PlayerEntity player = mc.player;
 			
 			transform.push();
