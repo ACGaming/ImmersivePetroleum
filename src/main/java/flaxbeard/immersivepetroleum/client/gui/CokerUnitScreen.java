@@ -18,10 +18,8 @@ import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEnti
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEntity.CokingChamber;
 import flaxbeard.immersivepetroleum.common.gui.CokerUnitContainer;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.gui.GuiUtils;
 
 public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
@@ -54,7 +52,7 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 		
 		// Power Stored
 		if(mx > guiLeft + 167 && mx < guiLeft + 175 && my > guiTop + 66 && my < guiTop + 88){
-			tooltip.add(new StringTextComponent(tile.getEnergyStored(null) + "/" + tile.getMaxEnergyStored(null) + " RF"));
+			tooltip.add(new StringTextComponent(tile.energyStorage.getEnergyStored() + "/" + tile.energyStorage.getMaxEnergyStored() + " RF"));
 		}
 		
 		if(!tooltip.isEmpty()){
@@ -68,17 +66,26 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 		
 		switch(chamberId){
 			case CHAMBER_A:{
-				ClientUtils.handleGuiTank(matrix, chamber.tank, x, y, 6, 38, 0, 0, 0, 0, mx, my, GUI_TEXTURE, null);
 				break;
 			}
 			case CHAMBER_B:{
-				ClientUtils.handleGuiTank(matrix, chamber.tank, x, y, 6, 38, 0, 0, 0, 0, mx, my, GUI_TEXTURE, null);
 				break;
 			}
-			default:break;
+			default:
+				break;
 		}
 		
-		// Debugging Tooltip
+		// Vertical Bar for Content amount.
+		ClientUtils.bindTexture(GUI_TEXTURE);
+		int scale = 38;
+		int off = (int) (chamber.getTotalAmount() / (float) chamber.getCapacity() * scale);
+		this.blit(matrix, x, y + scale - off, 200, 51, 6, off);
+		
+		// Chamber Tanks
+		ClientUtils.handleGuiTank(matrix, chamber.inputTank, x, y, 6, 38, 0, 0, 0, 0, mx, my, GUI_TEXTURE, null);
+		ClientUtils.handleGuiTank(matrix, chamber.outputTank, x, y, 6, 38, 0, 0, 0, 0, mx, my, GUI_TEXTURE, null);
+		
+		/*// Debugging Tooltip
 		if((mx >= x && mx < x + w) && (my >= y && my < y + h)){
 			float completed = 100 * chamber.getCompleted();
 			float remaining = 100 * chamber.getRemaining();
@@ -95,8 +102,10 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 			tooltip.add(new StringTextComponent(MathHelper.floor(remaining) + "% Remaining. (Raw: " + remaining + ")"));
 			
 			tooltip.add(new StringTextComponent("-------------"));
-			ClientUtils.handleGuiTank(matrix, chamber.tank, x, y, w, x, 0, 0, 0, 0, mx, my, GUI_TEXTURE, tooltip);
+			ClientUtils.handleGuiTank(matrix, chamber.inputTank, x, y, w, x, 0, 0, 0, 0, mx, my, GUI_TEXTURE, tooltip);
+			ClientUtils.handleGuiTank(matrix, chamber.outputTank, x, y, w, x, 0, 0, 0, 0, mx, my, GUI_TEXTURE, tooltip);
 		}
+		*/
 	}
 	
 	@Override
@@ -108,7 +117,9 @@ public class CokerUnitScreen extends IEContainerScreen<CokerUnitContainer>{
 		ClientUtils.handleGuiTank(matrixStack, tile.bufferTanks[TANK_INPUT], guiLeft + 32, guiTop + 14, 16, 47, 202, 2, 16, 47, mx, my, GUI_TEXTURE, null);
 		ClientUtils.handleGuiTank(matrixStack, tile.bufferTanks[TANK_OUTPUT], guiLeft + 152, guiTop + 14, 16, 47, 202, 2, 16, 47, mx, my, GUI_TEXTURE, null);
 		
-		int stored = (int) (46 * (tile.getEnergyStored(null) / (float) tile.getMaxEnergyStored(null)));
-		ClientUtils.drawGradientRect(guiLeft + 168, guiTop + 67 + (46 - stored), guiLeft + 175, guiTop + 88, 0xffb51500, 0xff600b00);
+		int x = guiLeft + 168;
+		int y = guiTop + 67;
+		int stored = (int) (tile.energyStorage.getEnergyStored() / (float) tile.energyStorage.getMaxEnergyStored() * 21);
+		ClientUtils.drawGradientRect(x, y + 21 - stored, x + 7, y + 21, 0xffb51500, 0xff600b00);
 	}
 }
