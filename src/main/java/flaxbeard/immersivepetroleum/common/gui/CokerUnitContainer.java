@@ -7,6 +7,7 @@ import blusunrize.immersiveengineering.common.gui.IESlot;
 import flaxbeard.immersivepetroleum.api.crafting.CokerUnitRecipe;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEntity;
 import flaxbeard.immersivepetroleum.common.blocks.tileentities.CokerUnitTileEntity.Inventory;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.container.Container;
@@ -55,6 +56,11 @@ public class CokerUnitContainer extends IEBaseContainer<CokerUnitTileEntity>{
 		for(int i = 0;i < 9;i++){
 			addSlot(new Slot(inventoryPlayer, i, 20 + i * 18, 163));
 		}
+	}
+	
+	@Override
+	public boolean canInteractWith(PlayerEntity player){
+		return inv != null;
 	}
 	
 	class CokerInput extends IESlot{
