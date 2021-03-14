@@ -170,7 +170,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	@Override
 	protected boolean canFillTankFrom(int iTank, Direction side, FluidStack resource){
 		if(this.posInMultiblock.equals(Fluid_IN)){
-			if(side == null || (getIsMirrored() ? (side == getFacing().rotateYCCW()) : (side == getFacing()))){
+			if(side == null || side == getFacing()){
 				CokerUnitTileEntity master = master();
 				
 				if(master != null && master.bufferTanks[TANK_INPUT].getFluidAmount() < master.bufferTanks[TANK_INPUT].getCapacity()){
@@ -187,7 +187,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	
 	@Override
 	protected boolean canDrainTankFrom(int iTank, Direction side){
-		if(this.posInMultiblock.equals(Fluid_OUT) && (side == null || (getIsMirrored() ? (side == getFacing().rotateYCCW()) : (side == getFacing().getOpposite())))){
+		if(this.posInMultiblock.equals(Fluid_OUT) && (side == null || side == getFacing())){
 			CokerUnitTileEntity master = master();
 			
 			return master != null && master.bufferTanks[TANK_OUTPUT].getFluidAmount() > 0;
@@ -454,19 +454,16 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	
 	@Override
 	protected IFluidTank[] getAccessibleFluidTanks(Direction side){
-		// TODO Fluid I/O with rotation and mirror
 		CokerUnitTileEntity master = master();
 		if(master != null){
-			// Fluid Input
 			if(this.posInMultiblock.equals(Fluid_IN)){
-				if(side == null || (getIsMirrored() ? (side == getFacing().rotateYCCW()) : (side == getFacing()))){
+				if(side == null || side == getFacing()){
 					return new IFluidTank[]{master.bufferTanks[TANK_INPUT]};
 				}
 			}
 			
-			// Fluid Output
 			if(this.posInMultiblock.equals(Fluid_OUT)){
-				if(side == null || (getIsMirrored() ? (side == getFacing().rotateYCCW()) : (side == getFacing().getOpposite()))){
+				if(side == null || side == getFacing().getOpposite()){
 					return new IFluidTank[]{master.bufferTanks[TANK_OUTPUT]};
 				}
 			}
@@ -495,7 +492,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	}
 	
 	public boolean isLadder(){
-		// TODO
+		// TODO This should be done together with the getShape method
 		return false;
 	}
 	
@@ -568,7 +565,6 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		}
 	}
 	
-	// TODO Do the cycle stuff
 	public static class CokingChamber{
 		@Nullable
 		protected CokerUnitRecipe recipe = null;
@@ -652,11 +648,10 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 				}
 				
 			}else{
-				// TODO Dumping Process
 				// Dumping should not cost energy, because gravity is a thing too..
 				
 				this.timer++;
-				if(this.timer >= 4){
+				if(this.timer >= 4){ // Output speed will always be fixed
 					this.timer = 0;
 					
 					if(this.outputAmount > 0){
