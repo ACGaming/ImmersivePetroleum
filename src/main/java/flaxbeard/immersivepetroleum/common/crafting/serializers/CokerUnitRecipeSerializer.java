@@ -22,7 +22,7 @@ public class CokerUnitRecipeSerializer extends IERecipeSerializer<CokerUnitRecip
 		ItemStack outputItem = readOutput(json.get("result"));
 		IngredientWithSize inputItem = IngredientWithSize.deserialize(JSONUtils.getJsonObject(json, "input"));
 		
-		int energy = 2048;
+		int energy = 96;
 		if(json.has("energy")) energy = JSONUtils.getInt(json, "energy");
 		
 		return new CokerUnitRecipe(recipeId, outputItem, outputFluid, inputItem, inputFluid, energy);

@@ -102,7 +102,7 @@ public class CokerUnitRecipe extends MultiblockRecipe{
 		this.outputItem = outputItem;
 		
 		this.totalProcessEnergy = (int) Math.floor(energy * IPServerConfig.REFINING.cokerUnit_energyModifier.get());
-		this.totalProcessTime = (int) Math.floor(1 * IPServerConfig.REFINING.cokerUnit_timeModifier.get());
+		this.totalProcessTime = (int) Math.floor(40 * IPServerConfig.REFINING.cokerUnit_timeModifier.get());
 	}
 	
 	@Override
