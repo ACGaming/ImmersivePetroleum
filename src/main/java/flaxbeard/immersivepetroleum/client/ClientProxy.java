@@ -50,6 +50,7 @@ import flaxbeard.immersivepetroleum.common.blocks.tileentities.PumpjackTileEntit
 import flaxbeard.immersivepetroleum.common.cfg.IPServerConfig;
 import flaxbeard.immersivepetroleum.common.crafting.RecipeReloadListener;
 import flaxbeard.immersivepetroleum.common.entity.SpeedboatEntity;
+import flaxbeard.immersivepetroleum.common.multiblocks.CokerUnitMultiblock;
 import flaxbeard.immersivepetroleum.common.multiblocks.DistillationTowerMultiblock;
 import flaxbeard.immersivepetroleum.common.multiblocks.PumpjackMultiblock;
 import net.minecraft.block.BlockState;
@@ -209,10 +210,12 @@ public class ClientProxy extends CommonProxy{
 		
 		pumpjack(modLoc("pumpjack"), 0);
 		distillation(modLoc("distillationtower"), 1);
-		handleReservoirManual(modLoc("reservoir"), 2);
+		coker(modLoc("cokerunit"), 2);
 		
-		lubricant(modLoc("lubricant"), 3);
-		man.addEntry(IP_CATEGORY, modLoc("asphalt"), 4);
+		handleReservoirManual(modLoc("reservoir"), 3);
+		
+		lubricant(modLoc("lubricant"), 4);
+		man.addEntry(IP_CATEGORY, modLoc("asphalt"), 5);
 		projector(modLoc("projector"), 5);
 		man.addEntry(IP_CATEGORY, modLoc("speedboat"), 6);
 		man.addEntry(IP_CATEGORY, modLoc("napalm"), 7);
@@ -304,6 +307,15 @@ public class ClientProxy extends CommonProxy{
 			
 			return new ManualElementTable(man, l.toArray(new ITextComponent[0][]), false);
 		});
+		builder.readFromFile(location);
+		man.addEntry(IP_CATEGORY, builder.create(), priority);
+	}
+	
+	protected static void coker(ResourceLocation location, int priority){
+		ManualInstance man = ManualHelper.getManual();
+		
+		ManualEntry.ManualEntryBuilder builder = new ManualEntry.ManualEntryBuilder(man);
+		builder.addSpecialElement("cokerunit0", 0, () -> new ManualElementMultiblock(man, CokerUnitMultiblock.INSTANCE));
 		builder.readFromFile(location);
 		man.addEntry(IP_CATEGORY, builder.create(), priority);
 	}
