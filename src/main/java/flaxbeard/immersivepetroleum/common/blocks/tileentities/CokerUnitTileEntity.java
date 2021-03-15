@@ -544,7 +544,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			// Vertical Center
 			if(bX == 4 && bZ == 4){
 				main.add(new AxisAlignedBB(0.375, 0.0, 0.625, 0.625, 1.0, 0.875)); // Center Beam +Z
-			}else if(bY>=4 && bX == 4 && bZ == 0){
+			}else if(bY >= 4 && bX == 4 && bZ == 0){
 				main.add(new AxisAlignedBB(0.375, 0.0, 0.125, 0.625, 1.0, 0.375)); // Center Beam -Z
 			}
 			
@@ -589,6 +589,15 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			}
 		}
 		
+		// Fluid output box bottom
+		if(bY == 0 && bZ == 4 && (bX == 2 || bX == 3)){
+			main.add(new AxisAlignedBB(0.0, 0.0, -0.25, 1.0, 1.0, 1.0));
+		}
+		// Fluid output box top
+		if(bY == 1 && bZ == 4 && (bX == 2 || bX == 3)){
+			main.add(new AxisAlignedBB(0.0, 0.0, -0.25, 1.0, 0.625, 1.0));
+		}
+		
 		// Redstone Controller
 		if(bY == 0 && bX == 6 && bZ == 4){
 			main.add(new AxisAlignedBB(0.75, 0.5, 0.625, 0.875, 1.0, 0.875));
@@ -597,9 +606,51 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			main.add(new AxisAlignedBB(0.0, 0.0, 0.5, 1.0, 1.0, 1.0));
 		}
 		
-		// Base Catwalk Shape
-		if((bY == 7 || bY == 12) && !(bX==0 && bZ==2)){
-			if(!(bX>0 && bX<8 && bZ>0 && bZ<4)){
+		// Power Sockets
+		if(bY == 1 && bZ == 0 && (bX>=1 && bX<=3)){
+			main.add(new AxisAlignedBB(0.0, 0.0, 0.25, 1.0, 1.0, 1.25));
+			main.add(new AxisAlignedBB(0.25, 0.25, 0.0, 0.75, 0.75, 0.5));
+		}
+		if(bY == 0 && bZ == 0 && (bX>=1 && bX<=3)){
+			main.add(new AxisAlignedBB(0.0, 0.0, 0.25, 1.0, 1.0, 1.25));
+		}
+		
+		// Slopes
+		if(bY == 3){
+			if(bZ == 0){
+				if(bX == 3){
+					main.add(new AxisAlignedBB(0.0, 0.0, 0.0625, 0.25, 0.25, 1.0));
+					main.add(new AxisAlignedBB(0.25, 0.0, 0.0625, 0.5, 0.5, 1.0));
+					main.add(new AxisAlignedBB(0.50, 0.0, 0.0625, 0.75, 0.75, 1.0));
+					main.add(new AxisAlignedBB(0.75, 0.0, 0.0625, 1.0, 1.0, 1.0));
+				}
+				if(bX == 4){
+					main.add(new AxisAlignedBB(0.0, 0.0, 0.0625, 1.0, 1.0, 1.0));
+				}
+				if(bX == 5){
+					main.add(new AxisAlignedBB(0.0, 0.0, 0.0625, 0.25, 1.0, 1.0));
+					main.add(new AxisAlignedBB(0.25, 0.0, 0.0625, 0.5, 0.75, 1.0));
+					main.add(new AxisAlignedBB(0.50, 0.0, 0.0625, 0.75, 0.5, 1.0));
+					main.add(new AxisAlignedBB(0.75, 0.0, 0.0625, 1.0, 0.25, 1.0));
+				}
+			}else if(bX == 4 && bZ == 3){
+				main.add(new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 1.0, 0.25));
+				main.add(new AxisAlignedBB(0.0, 0.0, 0.25, 1.0, 0.75, 0.5));
+				main.add(new AxisAlignedBB(0.0, 0.0, 0.5, 1.0, 0.5, 0.75));
+				main.add(new AxisAlignedBB(0.0, 0.0, 0.75, 1.0, 0.25, 1.0));
+			}
+		}
+		
+		// First and Second Platform Shape
+		if((bY == 7 || bY == 12) && !(bX == 0 && bZ == 2)){
+			if(!(bX > 0 && bX < 8 && bZ > 0 && bZ < 4) || (bX==4 && bZ>=1 && bZ<=3)){
+				main.add(new AxisAlignedBB(0.0, 0.5, 0.0, 1.0, 1.0, 1.0));
+			}
+		}
+		
+		// Top Platform
+		if(bY == 17){
+			if((bX >= 1 && bX <= 7) && (bZ == 1 || bZ == 3) || (bX == 7 && bZ == 2)){
 				main.add(new AxisAlignedBB(0.0, 0.5, 0.0, 1.0, 1.0, 1.0));
 			}
 		}
@@ -634,6 +685,22 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		
 		// All Pipes
 		{
+			if(bX == 2 && bZ == 4){
+				if(bY == 1){
+					main.add(new AxisAlignedBB(0.25, 0.0, 0.25, 0.75, 1.0, 0.75)); // Pipe Y
+					main.add(new AxisAlignedBB(0.125, 0.875, 0.875, 0.875, 1.0, 0.125)); // Pipe Connector +Y
+				}
+				if(bY >= 3 && bY <= 6){
+					main.add(new AxisAlignedBB(0.25, 0.0, 0.25, 0.75, 1.0, 0.75)); // Pipe Y
+					if(bY==3 || bY==5 || bY==6){
+						main.add(new AxisAlignedBB(0.125, 0.0, 0.875, 0.875, 0.125, 0.125)); // Pipe Connector -Y
+					}
+					if(bY==4 || bY==5 || bY==6){
+						main.add(new AxisAlignedBB(0.125, 0.875, 0.875, 0.875, 1.0, 0.125)); // Pipe Connector +Y
+					}
+				}
+			}
+			
 			if(bX == 6 && bZ == 0){
 				if(bY >= 1 && bY <= 6 && bY != 2){
 					main.add(new AxisAlignedBB(0.25, 0.0, 0.25, 0.75, 1.0, 0.75)); // Pipe Y
