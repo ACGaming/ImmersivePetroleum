@@ -13,6 +13,7 @@ import com.mojang.blaze3d.vertex.IVertexBuilder;
 import blusunrize.immersiveengineering.api.Lib;
 import blusunrize.immersiveengineering.client.ClientUtils;
 import blusunrize.immersiveengineering.common.blocks.IEBlockInterfaces.IBlockOverlayText;
+import blusunrize.immersiveengineering.common.blocks.generic.MultiblockPartTileEntity;
 import blusunrize.immersiveengineering.common.blocks.stone.CoresampleTileEntity;
 import blusunrize.immersiveengineering.common.items.BuzzsawItem;
 import blusunrize.immersiveengineering.common.items.ChemthrowerItem;
@@ -371,10 +372,26 @@ public class ClientEventHandler{
 					}
 					
 					if(!debugOut.isEmpty()){
+						if(te instanceof MultiblockPartTileEntity){
+							BlockPos pos = ((MultiblockPartTileEntity<?>)te).posInMultiblock;
+							BlockPos hit = result.getPos();
+							debugOut.add(0, toText("World XYZ: "+hit.getX()+", "+hit.getY()+", "+hit.getZ()));
+							debugOut.add(1, toText("Template XYZ: "+pos.getX()+", "+pos.getY()+", "+pos.getZ()));
+						}
+						
 						MatrixStack matrix = event.getMatrixStack();
 						matrix.push();
 						for(int i = 0;i < debugOut.size();i++){
-							ClientUtils.font().func_243246_a(matrix, debugOut.get(i), 2, 2 + (i * (ClientUtils.font().FONT_HEIGHT + 2)), -1);
+							int w = ClientUtils.font().getStringWidth(debugOut.get(i).getString());
+							int yOff = i * (ClientUtils.font().FONT_HEIGHT + 2);
+							
+							matrix.push();
+							matrix.translate(0, 0, -1);
+							ClientUtils.drawColouredRect(1, 1 + yOff, w+1, 10, 0xAF_4F4F4F, matrix);
+							matrix.pop();
+							
+							// Draw string without shadow
+							ClientUtils.font().func_243248_b(matrix, debugOut.get(i), 2, 2 + yOff, -1);
 						}
 						matrix.pop();
 					}
