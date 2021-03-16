@@ -86,10 +86,10 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	public static final int CHAMBER_B = 1;
 	
 	/** Template-Location of the Chamber A Item Output */
-	public static final BlockPos Chamber_A_OUT = new BlockPos(2, 1, 2);
+	public static final BlockPos Chamber_A_OUT = new BlockPos(2, 2, 2);
 	
 	/** Template-Location of the Chamber B Item Output */
-	public static final BlockPos Chamber_B_OUT = new BlockPos(6, 1, 2);
+	public static final BlockPos Chamber_B_OUT = new BlockPos(6, 2, 2);
 	
 	/** Template-Location of the Fluid Input Port. (6 0 0)<br> */
 	public static final BlockPos Fluid_IN = new BlockPos(6, 0, 0);
@@ -245,10 +245,11 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		}
 		
 		if(this.world.isRemote){
+			boolean debug = false;
 			for(int i = 0;i < this.chambers.length;i++){
-				if(this.chambers[i].isDumping()){
+				if(debug || this.chambers[i].isDumping()){
 					BlockPos cOutPos = getBlockPosForPos(i == 0 ? Chamber_A_OUT : Chamber_B_OUT);
-					Vector3d origin = new Vector3d(cOutPos.getX() + 0.5, cOutPos.getY() + 0.975, cOutPos.getZ() + 0.5);
+					Vector3d origin = new Vector3d(cOutPos.getX() + 0.5, cOutPos.getY() + 0.125, cOutPos.getZ() + 0.5);
 					for(int j = 0;j < 8;j++){
 						double rX = (Math.random() - 0.5) * 0.4;
 						double rY = (Math.random() - 0.5) * 0.5;
@@ -257,10 +258,10 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 						
 						world.addParticle(ParticleTypes.ASH,
 								origin.x + rX, origin.y, origin.z + rY,
-								rdx, -0.5, rdy);
+								rdx, 0.0, rdy);
 						world.addParticle(ParticleTypes.SMOKE,
 								origin.x + rX, origin.y, origin.z + rY,
-								rdx, -(Math.random() * 0.05 + 0.10), rdy);
+								rdx, -(Math.random() * 0.06 + 0.11), rdy);
 					}
 				}
 			}
@@ -1163,7 +1164,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 						
 						// Drop item(s) at the designated chamber output location
 						BlockPos itemOutPos = cokerunit.getBlockPosForPos(chamberId == 0 ? Chamber_A_OUT : Chamber_B_OUT);
-						Vector3d center = new Vector3d(itemOutPos.getX() + 0.5, itemOutPos.getY() + 0.5, itemOutPos.getZ() + 0.5);
+						Vector3d center = new Vector3d(itemOutPos.getX() + 0.5, itemOutPos.getY() - 0.5, itemOutPos.getZ() + 0.5);
 						ItemEntity ent = new ItemEntity(cokerunit.getWorldNonnull(), center.x, center.y, center.z, copy);
 						ent.setMotion(0.0, 0.0, 0.0); // Any movement has the potential to end with the stack bouncing all over the place
 						world.addEntity(ent);
