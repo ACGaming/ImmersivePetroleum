@@ -525,7 +525,6 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 		int bY = posInMultiblock.getY();
 		int bZ = posInMultiblock.getZ();
 		
-		// TODO Use this instead of many small things?
 		List<AxisAlignedBB> main = new ArrayList<>();
 		
 		// Beams
@@ -836,6 +835,208 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 					main.add(new AxisAlignedBB(0.25, 0.0, 0.25, 0.75, 1.0, 0.75).offset(4/16F, 0, 0)); // Pipe Y
 					if(bY == 13){
 						main.add(new AxisAlignedBB(0.125, 0.0, 0.875, 0.875, 0.125, 0.125).offset(4/16F, 0, 0)); // Pipe Connector -Y
+					}
+				}
+			}
+		}
+		
+		// TODO Remember to convert all the X/16F to something like 0.0625!
+		// Frame below top platform
+		{
+			// When viewed from the side with the power inputs
+			if(bZ == 1){
+				// Right
+				if(bX == 2){
+					switch(bY){
+						case 13:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 4/16F, 5/16F, 16/16F, 9/16F));
+							
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 0/16F, 5/16F, 4/16F, 16/16F));
+							main.add(new AxisAlignedBB(0/16F, 0/16F, 4/16F, 16/16F, 4/16F, 8/16F));
+							break;
+						}
+						case 14:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 5/16F, 5/16F, 16/16F, 10/16F));
+							break;
+						}
+						case 15:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 6/16F, 5/16F, 16/16F, 11/16F));
+							
+							main.add(new AxisAlignedBB(1/16F, 4/16F, 6/16F, 5/16F, 8/16F, 16/16F));
+							main.add(new AxisAlignedBB(1/16F, 4/16F, 7/16F, 16/16F, 8/16F, 11/16F));
+							break;
+						}
+						case 16:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 7/16F, 5/16F, 16/16F, 12/16F));
+							break;
+						}
+						case 17:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 8/16F, 5/16F, 16/16F, 13/16F));
+							break;
+						}
+					}
+				}
+				
+				// Middle
+				if(bX == 4){
+					switch(bY){
+						case 13:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 4/16F, 10/16F, 16/16F, 9/16F));
+							
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 0/16F, 10/16F, 4/16F, 16/16F));
+							main.add(new AxisAlignedBB(0/16F, 0/16F, 4/16F, 16/16F, 4/16F, 8/16F));
+							break;
+						}
+						case 14:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 5/16F, 10/16F, 16/16F, 10/16F));
+							break;
+						}
+						case 15:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 6/16F, 10/16F, 16/16F, 11/16F));
+							
+							main.add(new AxisAlignedBB(0/16F, 4/16F, 7/16F, 16/16F, 8/16F, 11/16F));
+							main.add(new AxisAlignedBB(6/16F, 4/16F, 8/16F, 10/16F, 8/16F, 16/16F));
+							break;
+						}
+						case 16:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 7/16F, 10/16F, 16/16F, 12/16F));
+							break;
+						}
+						case 17:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 8/16F, 10/16F, 16/16F, 13/16F));
+							break;
+						}
+					}
+				}
+				
+				// Left
+				if(bX == 6){
+					switch(bY){
+						case 13:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 4/16F, 15/16F, 16/16F, 9/16F));
+							
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 0/16F, 15/16F, 4/16F, 16/16F));
+							main.add(new AxisAlignedBB(0/16F, 0/16F, 4/16F, 16/16F, 4/16F, 8/16F));
+							break;
+						}
+						case 14:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 5/16F, 15/16F, 16/16F, 10/16F));
+							break;
+						}
+						case 15:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 6/16F, 15/16F, 16/16F, 11/16F));
+							
+							main.add(new AxisAlignedBB(11/16F, 4/16F, 6/16F, 15/16F, 8/16F, 16/16F));
+							main.add(new AxisAlignedBB(0/16F, 4/16F, 7/16F, 12/16F, 8/16F, 11/16F));
+							break;
+						}
+						case 16:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 7/16F, 15/16F, 16/16F, 12/16F));
+							break;
+						}
+						case 17:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 8/16F, 15/16F, 16/16F, 13/16F));
+							break;
+						}
+					}
+				}
+			}
+			
+			// When viewed from the side with the redstone controller
+			if(bZ == 3){
+				// Left
+				if(bX == 2){
+					switch(bY){
+						case 13:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 7/16F, 5/16F, 16/16F, 12/16F));
+							
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 0/16F, 5/16F, 4/16F, 16/16F));
+							main.add(new AxisAlignedBB(0/16F, 0/16F, 8/16F, 16/16F, 4/16F, 12/16F));
+							break;
+						}
+						case 14:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 6/16F, 5/16F, 16/16F, 11/16F));
+							break;
+						}
+						case 15:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 5/16F, 5/16F, 16/16F, 10/16F));
+							
+							main.add(new AxisAlignedBB(1/16F, 4/16F, 0/16F, 5/16F, 8/16F, 8/16F));
+							main.add(new AxisAlignedBB(1/16F, 4/16F, 5/16F, 16/16F, 8/16F, 9/16F));
+							break;
+						}
+						case 16:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 4/16F, 5/16F, 16/16F, 9/16F));
+							break;
+						}
+						case 17:{
+							main.add(new AxisAlignedBB(1/16F, 0/16F, 3/16F, 5/16F, 16/16F, 8/16F));
+							break;
+						}
+					}
+				}
+				
+				// Middle
+				if(bX == 4){
+					switch(bY){
+						case 13:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 7/16F, 10/16F, 16/16F, 12/16F));
+							
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 0/16F, 10/16F, 4/16F, 16/16F));
+							main.add(new AxisAlignedBB(0/16F, 0/16F, 8/16F, 16/16F, 4/16F, 12/16F));
+							break;
+						}
+						case 14:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 6/16F, 10/16F, 16/16F, 11/16F));
+							break;
+						}
+						case 15:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 5/16F, 10/16F, 16/16F, 10/16F));
+							
+							main.add(new AxisAlignedBB(0/16F, 4/16F, 5/16F, 16/16F, 8/16F, 9/16F));
+							main.add(new AxisAlignedBB(6/16F, 4/16F, 0/16F, 10/16F, 8/16F, 8/16F));
+							break;
+						}
+						case 16:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 4/16F, 10/16F, 16/16F, 9/16F));
+							break;
+						}
+						case 17:{
+							main.add(new AxisAlignedBB(6/16F, 0/16F, 3/16F, 10/16F, 16/16F, 8/16F));
+							break;
+						}
+					}
+				}
+				
+				// Right
+				if(bX == 6){
+					switch(bY){
+						case 13:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 7/16F, 15/16F, 16/16F, 12/16F));
+							
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 0/16F, 15/16F, 4/16F, 16/16F));
+							main.add(new AxisAlignedBB(0/16F, 0/16F, 8/16F, 16/16F, 4/16F, 12/16F));
+							break;
+						}
+						case 14:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 6/16F, 15/16F, 16/16F, 11/16F));
+							break;
+						}
+						case 15:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 5/16F, 15/16F, 16/16F, 10/16F));
+							
+							main.add(new AxisAlignedBB(11/16F, 4/16F, 0/16F, 15/16F, 8/16F, 8/16F));
+							main.add(new AxisAlignedBB(0/16F, 4/16F, 5/16F, 12/16F, 8/16F, 9/16F));
+							break;
+						}
+						case 16:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 4/16F, 15/16F, 16/16F, 9/16F));
+							break;
+						}
+						case 17:{
+							main.add(new AxisAlignedBB(11/16F, 0/16F, 3/16F, 15/16F, 16/16F, 8/16F));
+							break;
+						}
 					}
 				}
 			}
