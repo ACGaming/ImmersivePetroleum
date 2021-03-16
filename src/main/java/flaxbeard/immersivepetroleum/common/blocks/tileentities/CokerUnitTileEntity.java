@@ -173,7 +173,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 				CokerUnitTileEntity master = master();
 				
 				if(master != null && master.bufferTanks[TANK_INPUT].getFluidAmount() < master.bufferTanks[TANK_INPUT].getCapacity()){
-					if(master.bufferTanks[TANK_INPUT].getFluid() == FluidStack.EMPTY){
+					if(master.bufferTanks[TANK_INPUT].isEmpty()){
 						return CokerUnitRecipe.hasRecipeWithInput(resource, true);
 					}else{
 						return resource.isFluidEqual(master.bufferTanks[TANK_INPUT].getFluid());
