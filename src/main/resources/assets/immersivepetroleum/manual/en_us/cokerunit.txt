@@ -3,4 +3,4 @@ Very sticky stuff
 <&cokerunit0>The Coker is a §overy large§r multiblock structure that further processes Bitumen into Petroleum Coke (Petcoke) and some Diesel.<np>
 Water and Bitumen can be input at the back.
 Water is input at the port marked with a blue dot Bitumen can be inserted through the hatch in the middle.
-
+Petcoke is dropped below the chamber chutes
