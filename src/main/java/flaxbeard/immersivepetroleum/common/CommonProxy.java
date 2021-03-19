@@ -28,16 +28,8 @@ public class CommonProxy{
 	@SuppressWarnings("unused")
 	private static final Logger log = LogManager.getLogger(ImmersivePetroleum.MODID + "/CommonProxy");
 	
-	/** Fired during instantiation of {@link ImmersivePetroleum} */
-	public void construct(){
-	}
-	
 	/** Fired at {@link FMLCommonSetupEvent} */
 	public void setup(){
-	}
-	
-	/** Fired at {@link FMLLoadCompleteEvent} */
-	public void completed(){
 	}
 	
 	public void registerContainersAndScreens(){
@@ -55,6 +47,10 @@ public class CommonProxy{
 	}
 	
 	public void postInit(){
+	}
+	
+	/** Fired at {@link FMLLoadCompleteEvent} */
+	public void completed(){
 	}
 	
 	public void serverAboutToStart(){
@@ -75,15 +71,15 @@ public class CommonProxy{
 	public void drawUpperHalfSlab(MatrixStack transform, ItemStack stack){
 	}
 	
+	public void openProjectorGui(Hand hand, ItemStack held){
+	}
+	
 	public World getClientWorld(){
 		return null;
 	}
 	
 	public PlayerEntity getClientPlayer(){
 		return null;
-	}
-	
-	public void openProjectorGui(Hand hand, ItemStack held){
 	}
 	
 	protected static ResourceLocation modLoc(String str){
