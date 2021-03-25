@@ -295,8 +295,8 @@ public class ClientEventHandler{
 						}
 						
 						debugOut.add(toText("Distillation Tower").mergeStyle(TextFormatting.GOLD)
-								.append(toText(tower.isRSDisabled() ? " (Redstoned)" : "").mergeStyle(TextFormatting.RED))
-								.append(toText(tower.shouldRenderAsActive() ? " (Active)" : "").mergeStyle(TextFormatting.GREEN)));
+								.appendSibling(toText(tower.isRSDisabled() ? " (Redstoned)" : "").mergeStyle(TextFormatting.RED))
+								.appendSibling(toText(tower.shouldRenderAsActive() ? " (Active)" : "").mergeStyle(TextFormatting.GREEN)));
 						debugOut.add(toText(tower.energyStorage.getEnergyStored() + "/" + tower.energyStorage.getMaxEnergyStored() + "RF"));
 						
 						{
@@ -334,8 +334,8 @@ public class ClientEventHandler{
 						}
 						
 						debugOut.add(toText("Coker Unit ").mergeStyle(TextFormatting.GOLD)
-								.append(toText(coker.isRSDisabled() ? " (Redstoned)" : "").mergeStyle(TextFormatting.RED))
-								.append(toText(coker.shouldRenderAsActive() ? " (Active)" : "").mergeStyle(TextFormatting.GREEN)));
+								.appendSibling(toText(coker.isRSDisabled() ? " (Redstoned)" : "").mergeStyle(TextFormatting.RED))
+								.appendSibling(toText(coker.shouldRenderAsActive() ? " (Active)" : "").mergeStyle(TextFormatting.GREEN)));
 						debugOut.add(toText(coker.energyStorage.getEnergyStored() + "/" + coker.energyStorage.getMaxEnergyStored() + "RF"));
 						
 						{
@@ -359,9 +359,9 @@ public class ClientEventHandler{
 							float remaining = 100 * chamber.getRemaining();
 							
 							debugOut.add(toText("  State: ")
-								.append(toText("Active").mergeStyle(chamber.isActive() ? TextFormatting.GREEN : TextFormatting.RED))
+								.appendSibling(toText("Active").mergeStyle(chamber.isActive() ? TextFormatting.GREEN : TextFormatting.RED))
 								.appendString(" | ")
-								.append(toText("Dumping").mergeStyle(chamber.isDumping() ? TextFormatting.GREEN : TextFormatting.RED)));
+								.appendSibling(toText("Dumping").mergeStyle(chamber.isDumping() ? TextFormatting.GREEN : TextFormatting.RED)));
 							
 							debugOut.add(toText("  Items: " + chamber.getTotalAmount() + " / " + chamber.getCapacity()).appendString(" ("+chamber.getInputItem().getDisplayName().getString()+")"));
 							debugOut.add(toText("  Out: " + chamber.getOutputItem().getDisplayName().getString()));
@@ -391,7 +391,7 @@ public class ClientEventHandler{
 							matrix.pop();
 							
 							// Draw string without shadow
-							ClientUtils.font().func_243248_b(matrix, debugOut.get(i), 2, 2 + yOff, -1);
+							ClientUtils.font().drawText(matrix, debugOut.get(i), 2, 2 + yOff, -1);
 						}
 						matrix.pop();
 					}
@@ -452,7 +452,7 @@ public class ClientEventHandler{
 										int fy = event.getWindow().getScaledHeight() / 2 + 8 + i * ClientUtils.font().FONT_HEIGHT;
 										
 										IRenderTypeBuffer.Impl buffer = IRenderTypeBuffer.getImpl(Tessellator.getInstance().getBuffer());
-										ClientUtils.font().func_238416_a_(LanguageMap.getInstance().func_241870_a(display), fx, fy, 0xFFFFFFFF, true, event.getMatrixStack().getLast().getMatrix(), buffer, false, 0, 0xF000F0);
+										ClientUtils.font().drawEntityText(LanguageMap.getInstance().func_241870_a(display), fx, fy, 0xFFFFFFFF, true, event.getMatrixStack().getLast().getMatrix(), buffer, false, 0, 0xF000F0);
 										buffer.finish();
 									}
 								}
