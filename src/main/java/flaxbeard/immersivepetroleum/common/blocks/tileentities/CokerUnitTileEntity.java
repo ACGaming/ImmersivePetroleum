@@ -35,6 +35,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.ResourceLocationException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.vector.Vector3d;
@@ -214,7 +215,7 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 	}
 	
 	private LazyOptional<IItemHandler> insertionHandler = registerConstantCap(
-			new IEInventoryHandler(5, this, 0, new boolean[]{true, false, false, false, false}, new boolean[8])
+			new IEInventoryHandler(1, this, 0, new boolean[]{true}, new boolean[8])
 	);
 	
 	@Override
@@ -469,6 +470,25 @@ public class CokerUnitTileEntity extends PoweredMultiblockTileEntity<CokerUnitTi
 			}
 		}
 		return new IFluidTank[0];
+	}
+	
+	@Override
+	public int getComparatedSize(){
+		return 1;
+	}
+	
+	@Override
+	public int getComparatorInputOverride(){
+		if(this.isRedstonePos()){
+			CokerUnitTileEntity master = master();
+			if(master != null && !master.getInventory(Inventory.INPUT).isEmpty()){
+				ItemStack stack = master.getInventory(Inventory.INPUT);
+				int out = MathHelper.floor(stack.getCount() / (float) Math.min(master.getSlotLimit(Inventory.INPUT.id()), stack.getMaxStackSize()) * 15);
+				return MathHelper.clamp(out, 0, 15);
+			}
+		}
+		
+		return 0;
 	}
 	
 	@Override
