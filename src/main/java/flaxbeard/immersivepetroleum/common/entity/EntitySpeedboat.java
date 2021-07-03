@@ -10,6 +10,9 @@ import flaxbeard.immersivepetroleum.common.IPContent;
 import flaxbeard.immersivepetroleum.common.items.ItemSpeedboat;
 import flaxbeard.immersivepetroleum.common.network.ConsumeBoatFuelPacket;
 import flaxbeard.immersivepetroleum.common.network.IPPacketHandler;
+import net.dries007.tfc.objects.blocks.BlocksTFC;
+import net.dries007.tfc.objects.fluids.FluidsTFC;
+
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -481,6 +484,11 @@ public class EntitySpeedboat extends EntityBoat
 							{
 								this.world.destroyBlock(blockpos$pooledmutableblockpos2, false);
 								this.world.setBlockState(blockpos$pooledmutableblockpos2, Blocks.FLOWING_WATER.getDefaultState());
+							}
+							else if (iblockstate.getBlock() == BlocksTFC.SEA_ICE && sim > .3f)
+							{
+								this.world.destroyBlock(blockpos$pooledmutableblockpos2, false);
+								this.world.setBlockState(blockpos$pooledmutableblockpos2, FluidsTFC.SALT_WATER.get().getBlock().getDefaultState());
 							}
 						}
 					}
